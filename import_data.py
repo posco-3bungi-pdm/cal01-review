@@ -22,6 +22,8 @@ PROJECT = os.path.dirname(HERE)  # Posco_Project 폴더
 ENC = "utf-8-sig"
 
 BACKUP_JSON = os.path.join(PROJECT, "_backup", "cal01-review-20261022", "cal01-review-backup-20261022.json")
+# 백업 뒤에 옛 사이트에 올라온 팀원 기록 (10-22 17시 정수진 6개)
+EXTRA_JSON = os.path.join(PROJECT, "_backup", "cal01-review-20261022", "cal01-review-extra-after-backup.json")
 DATA_DIR = os.path.join(PROJECT, "pdm-project", "data")
 MINUTE_CSV = os.path.join(DATA_DIR, "processed", "cal01_base_v5.csv")
 DECISION_CSV = os.path.join(DATA_DIR, "labels", "domain_decisions.csv")
@@ -85,6 +87,13 @@ def main():
     conn.commit()
 
     backup = json.load(open(BACKUP_JSON, encoding="utf-8"))
+
+    # 백업 뒤에 올라온 기록이 있으면 같이 넣음
+    if os.path.isfile(EXTRA_JSON):
+        extra = json.load(open(EXTRA_JSON, encoding="utf-8"))
+        backup["snapshots"] = backup["snapshots"] + extra["snapshots"]
+        backup["images"].update(extra["images"])
+        backup["snapshotOrganization"]["organization"]["placements"] += extra["placements"]
 
     # ------------------------------------------------------------ 1. LOT별 1분 평균값
     minute = pd.read_csv(MINUTE_CSV, encoding=ENC, usecols=["LOT_NO", "MEAS_DT", "GRADE", "EXCLUDED"] + SENSORS)
