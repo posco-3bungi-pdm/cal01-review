@@ -4,23 +4,39 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CAL01 공동 검토 · 접속</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <script>try { document.documentElement.dataset.theme = localStorage.getItem('theme') || 'light'; } catch (e) {}</script>
 </head>
 <body class="login-body">
-<div class="login-card">
+{% include "_icons.html" %}
+<div class="login-card holo" data-tilt>
   <img class="hero-img hero-light" src="{{ url_for('static', filename='images/hero-light.webp') }}" alt="">
   <img class="hero-img hero-dark" src="{{ url_for('static', filename='images/hero-dark.webp') }}" alt="">
   <form method="post" class="login-form">
     <span class="kicker">CAL01 · TEAM REVIEW</span>
     <h1>소둔로 공동 검토</h1>
-    <p class="muted">받은 접속 코드를 넣으면 내 이름으로 판단을 남길 수 있어요.</p>
+    <p class="muted">받은 접속 코드로 들어가면 내 이름으로 판단이 남음.</p>
     <label for="code">접속 코드</label>
     <input id="code" name="code" type="password" autocomplete="off" required autofocus>
     {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
-    <button type="submit" class="primary">들어가기</button>
+    <button type="submit" class="icon-btn primary login-go" data-tip="들어가기" aria-label="들어가기"><svg class="ico"><use href="#i-arrow"></use></svg></button>
   </form>
 </div>
+<script>
+  // 로그인 카드도 마우스를 따라 살짝 기울어짐
+  document.querySelectorAll('[data-tilt]').forEach(function (el) {
+    el.addEventListener('mousemove', function (e) {
+      var r = el.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width - 0.5;
+      var y = (e.clientY - r.top) / r.height - 0.5;
+      el.style.transform = 'perspective(1100px) rotateY(' + (x * 5) + 'deg) rotateX(' + (-y * 5) + 'deg)';
+      el.style.setProperty('--mx', (x + 0.5) * 100 + '%');
+      el.style.setProperty('--my', (y + 0.5) * 100 + '%');
+    });
+    el.addEventListener('mouseleave', function () { el.style.transform = ''; });
+  });
+</script>
 </body>
 </html>

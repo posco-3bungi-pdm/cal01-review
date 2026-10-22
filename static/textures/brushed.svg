@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="240">
+  <!-- 헤어라인 강판: 가로로 아주 가는 결 (흰 결만 그림, 바탕색은 CSS에서) -->
+  <filter id="b" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.0025 0.75" numOctaves="3" seed="2" stitchTiles="stitch"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0.9 0 0 0 -0.32"/>
+  </filter>
+  <rect width="600" height="240" filter="url(#b)"/>
+</svg>

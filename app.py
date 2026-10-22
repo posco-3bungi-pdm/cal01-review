@@ -26,6 +26,17 @@ LABELS = ["1", "0", "보류"]
 TRAININGS = ["포함", "제외", "미결정"]
 OPERATIONS = ["미정", "운전 중", "정지", "재가동", "그 외"]
 FOLDER_COLORS = ["#F59E0B", "#2563EB", "#059669", "#C2261F", "#7C3AED", "#DB2777", "#8A94A6", "#0EA5E9"]
+CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "")  # 푸터 이메일 (Render 환경변수에 넣음)
+
+
+@app.context_processor
+def footer_values():
+    return {"contact_email": CONTACT_EMAIL}
+
+
+@app.route("/favicon.ico")
+def favicon():
+    return redirect(url_for("static", filename="favicon.svg"))
 
 
 # ---------------------------------------------------------------- DB 연결
@@ -80,7 +91,7 @@ def login_required(view):
     def wrapper(*args, **kwargs):
         if "user" not in session:
             if request.path.startswith("/api/"):
-                return jsonify({"error": "접속 코드로 들어와 주세요."}), 401
+                return jsonify({"error": "접속 코드 필요."}), 401
             return redirect(url_for("login", next=request.path))
         return view(*args, **kwargs)
     return wrapper
@@ -102,14 +113,14 @@ def login():
         ATTEMPTS[ip] = (count, until)
 
         if count > 20:
-            error = "시도가 많아요. 10분 뒤에 다시 해 주세요."
+            error = "시도 횟수 초과. 10분 뒤 다시 시도."
         else:
             found = sql("SELECT user_id, name FROM members WHERE code_hash = ?", (code_hash(request.form.get("code", "")),))
             if found:
                 session["user"] = {"id": found[0]["user_id"], "name": found[0]["name"]}
                 session.permanent = True
                 return redirect(request.args.get("next") or url_for("review"))
-            error = "접속 코드를 다시 확인해 주세요."
+            error = "접속 코드 불일치."
     return render_template("login.html", error=error)
 
 
@@ -357,13 +368,13 @@ def api_notifications():
     items = []
     for r in sql("SELECT h.author, h.created_at, c.lot_no, c.sensor, h.candidate_id FROM history h JOIN candidates c ON c.id = h.candidate_id "
                  "WHERE h.action = '판단 저장' AND h.author <> ? ORDER BY h.created_at DESC LIMIT 20", (me(),)):
-        items.append({"time": r["created_at"], "text": r["author"] + "님이 판단을 남겼어요",
+        items.append({"time": r["created_at"], "text": r["author"] + " 판단 남김",
                       "sub": r["lot_no"] + " · " + r["sensor"], "link": "/?lot=" + r["lot_no"] + "#" + r["candidate_id"]})
     for r in sql("SELECT author, created_at, title FROM snapshots WHERE author <> ? ORDER BY created_at DESC LIMIT 20", (me(),)):
-        items.append({"time": r["created_at"], "text": r["author"] + "님이 구간을 공유했어요", "sub": r["title"], "link": "/records"})
+        items.append({"time": r["created_at"], "text": r["author"] + " 구간 공유", "sub": r["title"], "link": "/records"})
     for r in sql("SELECT m.author, m.created_at, c.lot_no, c.sensor FROM comments m JOIN candidates c ON c.id = m.candidate_id "
                  "WHERE m.author <> ? ORDER BY m.created_at DESC LIMIT 20", (me(),)):
-        items.append({"time": r["created_at"], "text": r["author"] + "님이 의견을 남겼어요", "sub": r["lot_no"] + " · " + r["sensor"], "link": "/?lot=" + r["lot_no"]})
+        items.append({"time": r["created_at"], "text": r["author"] + " 의견 남김", "sub": r["lot_no"] + " · " + r["sensor"], "link": "/?lot=" + r["lot_no"]})
 
     items.sort(key=lambda x: x["time"], reverse=True)
     items = items[:20]

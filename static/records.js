@@ -65,6 +65,6 @@ document.getElementById('folder-add').addEventListener('click', function () {
 document.querySelectorAll('.move-folder').forEach(function (sel) {
   sel.addEventListener('change', function () {
     postJSON('/api/snapshots/' + encodeURIComponent(sel.dataset.id), { folder: sel.value })
-      .then(function () { showToast('폴더를 옮겼어요'); });
+      .then(function () { showToast('폴더 옮김'); });
   });
 });

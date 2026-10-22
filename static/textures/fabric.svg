@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="6" height="6">
+  <!-- 섬유 질감: 아주 촘촘한 날실, 씨실 -->
+  <path d="M0 1.5H6M0 4.5H6" stroke="#000" stroke-opacity=".06" stroke-width="1"/>
+  <path d="M1.5 0V6M4.5 0V6" stroke="#FFF" stroke-opacity=".35" stroke-width="1"/>
+</svg>

@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}CAL01 공동 검토{% endblock %}</title>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <script>
   // 저장해 둔 밝기를 화면이 그려지기 전에 적용
@@ -13,33 +14,76 @@
 </script>
 </head>
 <body>
+{% include "_icons.html" %}
+
 <header class="topbar">
-  <a class="brand" href="{{ url_for('review') }}"><strong>CAL01</strong><span>소둔로 공동 검토</span></a>
-  <nav class="nav">
-    <a href="{{ url_for('review') }}" class="{{ 'on' if request.endpoint == 'review' }}">검토</a>
-    <a href="{{ url_for('records') }}" class="{{ 'on' if request.endpoint == 'records' }}">팀원 기록</a>
-    <a href="{{ url_for('compare') }}" class="{{ 'on' if request.endpoint == 'compare' }}">LOT 나란히 비교</a>
+  <a class="brand" href="{{ url_for('review') }}"><img src="{{ url_for('static', filename='favicon.svg') }}" alt="" width="26" height="26"><strong>CAL01</strong><span>소둔로 공동 검토</span></a>
+  <nav class="nav" aria-label="화면">
+    <a href="{{ url_for('review') }}" class="icon-btn {{ 'on' if request.endpoint == 'review' }}" data-tip="검토" aria-label="검토"><svg class="ico"><use href="#i-review"></use></svg></a>
+    <a href="{{ url_for('records') }}" class="icon-btn {{ 'on' if request.endpoint == 'records' }}" data-tip="팀원 기록" aria-label="팀원 기록"><svg class="ico"><use href="#i-records"></use></svg></a>
+    <a href="{{ url_for('compare') }}" class="icon-btn {{ 'on' if request.endpoint == 'compare' }}" data-tip="LOT 나란히 비교" aria-label="LOT 나란히 비교"><svg class="ico"><use href="#i-compare"></use></svg></a>
   </nav>
   <div class="tools">
     <div class="segment" role="group" aria-label="화면 밝기">
-      <button type="button" data-theme-set="light">라이트</button>
-      <button type="button" data-theme-set="dark">다크</button>
+      <button type="button" class="icon-btn" data-theme-set="light" data-tip="라이트" aria-label="라이트"><svg class="ico"><use href="#i-sun"></use></svg></button>
+      <button type="button" class="icon-btn" data-theme-set="dark" data-tip="다크" aria-label="다크"><svg class="ico"><use href="#i-moon"></use></svg></button>
     </div>
     <div class="bell-wrap">
-      <button type="button" class="icon-btn" id="bell" aria-label="팀 알림" aria-expanded="false">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+      <button type="button" class="icon-btn" id="bell" data-tip="팀 알림" aria-label="팀 알림" aria-expanded="false">
+        <svg class="ico"><use href="#i-bell"></use></svg>
         <span class="badge" id="bell-count" hidden></span>
       </button>
       <div class="bell-panel" id="bell-panel" hidden></div>
     </div>
-    <span class="who">{{ session.user.name }}</span>
-    <a class="pill" href="{{ url_for('logout') }}">나가기</a>
+    <span class="avatar" data-tip="{{ session.user.name }}" aria-label="{{ session.user.name }}">{{ session.user.name[-2:] }}</span>
+    <a class="icon-btn" href="{{ url_for('logout') }}" data-tip="나가기" aria-label="나가기"><svg class="ico"><use href="#i-logout"></use></svg></a>
   </div>
 </header>
 
 <main class="page">
 {% block content %}{% endblock %}
 </main>
+
+<!-- 푸터: 라탄 짜임 위에 팀 소개와 링크 -->
+<footer class="footer">
+  <div class="footer-inner">
+    <section class="footer-team plate" aria-labelledby="team-title">
+      <h2 id="team-title">팀 구성</h2>
+      <div class="table-wrap">
+        <table class="team-table">
+          <thead><tr><th>이름</th><th>역할</th><th>책임 범위</th><th>주요 산출물</th></tr></thead>
+          <tbody>
+            <tr><td><span class="avatar small">태구</span>김태구</td><td>팀장 (PM)</td><td>일정 관리, 게이트 준비, 강사 소통, 의사결정 정리</td><td>진행 기록, 최종 발표 총괄</td></tr>
+            <tr><td><span class="avatar small">정렬</span>김정렬</td><td>모델링 담당</td><td>기준 모델 및 머신러닝 모델 학습·비교</td><td>모델 코드, 성능 비교 표</td></tr>
+            <tr><td><span class="avatar small">수진</span>정수진</td><td>시계열·특성 담당</td><td>추세·주기·변동성 분석, 파생 특성 생성</td><td>시계열 분석 노트북, 특성 정의서</td></tr>
+            <tr><td><span class="avatar small">민호</span>박민호</td><td>해석·문서 담당</td><td>오탐/미탐 사례 정리, 보전 관점 해석, 문서 편집</td><td>결과보고서, 발표자료, README</td></tr>
+            <tr><td><span class="avatar small">유진</span>황유진</td><td>데이터 담당</td><td>데이터 확보, 품질 점검, 전처리 파이프라인 관리</td><td>전처리 코드, 데이터 명세 표</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="footer-side">
+      <div class="footer-brand">
+        <img src="{{ url_for('static', filename='favicon.svg') }}" alt="" width="34" height="34">
+        <div><strong>CAL01</strong><span>소둔로 이상 후보 공동 검토</span></div>
+      </div>
+      <div class="footer-links">
+        <a class="icon-btn" href="https://github.com/posco-3bungi-pdm/pdm-project" target="_blank" rel="noopener" data-tip="GitHub" aria-label="GitHub 저장소"><svg class="ico"><use href="#i-github"></use></svg></a>
+        <a class="icon-btn" href="https://app.notion.com/p/3dde609a45d081e580fbdec525186852" target="_blank" rel="noopener" data-tip="Notion" aria-label="Notion 팀 허브"><svg class="ico"><use href="#i-book"></use></svg></a>
+        {% if contact_email %}<a class="icon-btn" href="mailto:{{ contact_email }}" data-tip="{{ contact_email }}" aria-label="이메일"><svg class="ico"><use href="#i-mail"></use></svg></a>{% endif %}
+      </div>
+      <div class="swatches" aria-label="포스아트 질감">
+        <span class="swatch-chip sw-marble" data-tip="대리석"></span>
+        <span class="swatch-chip sw-wood" data-tip="나무결"></span>
+        <span class="swatch-chip sw-rattan" data-tip="라탄"></span>
+        <span class="swatch-chip sw-fabric" data-tip="섬유"></span>
+        <span class="swatch-chip sw-steel" data-tip="헤어라인"></span>
+      </div>
+      <small class="footer-note">2026 · posco-3bungi-pdm</small>
+    </section>
+  </div>
+</footer>
 
 <div class="toast" id="toast" role="status" hidden></div>
 

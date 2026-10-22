@@ -1,21 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 
-<section class="hero card">
+<!-- 히어로: 그림이 칸 전체를 채우고, 왼쪽으로 갈수록 바탕색이 짙어짐 -->
+<section class="hero card holo" data-tilt>
+  <div class="hero-media" aria-hidden="true">
+    <img class="hero-light" src="{{ url_for('static', filename='images/hero-light.webp') }}" alt="">
+    <img class="hero-dark" src="{{ url_for('static', filename='images/hero-dark.webp') }}" alt="">
+  </div>
   <div class="hero-text">
     <span class="kicker">CAL01 · TEAM REVIEW</span>
-    <h1>같은 구간을 보고, 판단을 함께 남깁니다.</h1>
+    <h1>같은 구간을 보고, 판단을 함께 남긴다.</h1>
     <span class="muted">채널 변화, 작업 기록, 팀원 판단</span>
   </div>
-  <img class="hero-img hero-light" src="{{ url_for('static', filename='images/hero-light.webp') }}" alt="소둔로 라인">
-  <img class="hero-img hero-dark" src="{{ url_for('static', filename='images/hero-dark.webp') }}" alt="소둔로 라인">
 </section>
 
 <div class="split">
 
   <!-- 왼쪽 1: 우선 볼 후보 -->
   <aside class="card cand-list" aria-label="우선 볼 후보">
-    <h2>우선 볼 후보</h2>
+    <h2 class="plate-title wood">우선 볼 후보</h2>
     <form method="get" class="cand-filter">
       <label>LOT
         <select name="lot" onchange="this.form.submit()">
@@ -38,8 +41,8 @@
         <span>{{ c.start_at[5:16] }}</span>
         {% if c.label %}<span class="label-chip l{{ c.label }}">{{ '이상 1' if c.label == '1' else ('정상 0' if c.label == '0' else '보류') }}</span>{% endif %}
       </button>
-      <button type="button" class="pin {{ 'on' if pinned }}" data-id="{{ c.id }}" aria-label="{{ '고정 풀기' if pinned else '고정하기' }}">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="{{ 'currentColor' if pinned else 'none' }}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5"></path><path d="M9 10.76V4h6v6.76l3 3.24H6z"></path></svg>
+      <button type="button" class="pin {{ 'on' if pinned }}" data-id="{{ c.id }}" data-tip="{{ '고정 풀기' if pinned else '고정' }}" aria-label="{{ '고정 풀기' if pinned else '고정' }}">
+        <svg class="ico"><use href="#i-pin"></use></svg>
       </button>
     </div>
     {% endmacro %}
@@ -58,17 +61,18 @@
         <h2>채널과 작업 기록</h2>
       </div>
       <div class="row-gap">
-        <a class="pill" href="{{ url_for('compare') }}?lots={{ lot }}">LOT 나란히 비교</a>
-        <button type="button" class="pill" id="snap-open">구간 스냅샷</button>
-        <button type="button" class="pill primary" id="memo-open">판단 메모</button>
+        <a class="icon-btn" href="{{ url_for('compare') }}?lots={{ lot }}" data-tip="LOT 나란히 비교" aria-label="LOT 나란히 비교"><svg class="ico"><use href="#i-compare"></use></svg></a>
+        <a class="icon-btn" href="{{ url_for('export_decisions') }}" data-tip="검토 표 내보내기 (CSV)" aria-label="검토 표 내보내기"><svg class="ico"><use href="#i-download"></use></svg></a>
+        <button type="button" class="icon-btn" id="snap-open" data-tip="구간 스냅샷" aria-label="구간 스냅샷"><svg class="ico"><use href="#i-camera"></use></svg></button>
+        <button type="button" class="icon-btn primary" id="memo-open" data-tip="판단 메모" aria-label="판단 메모"><svg class="ico"><use href="#i-note"></use></svg></button>
       </div>
     </div>
 
-    <div class="row-gap channel-bar">
-      <div id="channel-chips" class="row-gap"></div>
-      <label class="z-toggle"><input type="checkbox" id="z-toggle" checked> Z-score 기준선 ±3σ</label>
+    <div class="channel-bar">
+      <div id="channel-chips" class="channel-groups"></div>
+      <button type="button" class="icon-btn danger on" id="z-toggle" aria-pressed="true" data-tip="Z-score 기준선 ±3σ" aria-label="Z-score 기준선 ±3σ"><svg class="ico"><use href="#i-sigma"></use></svg></button>
     </div>
-    <p class="muted small">빨간 점선은 이 LOT의 평균 ±3σ, 빨간 선은 기준선 밖이에요. 회색 바탕은 제외 구간, 노란 바탕은 고른 후보예요.</p>
+    <p class="muted small">빨간 점선은 LOT 평균 ±3σ, 빨간 선은 기준선 밖임. 회색 바탕은 제외 구간, 노란 바탕은 고른 후보임.</p>
 
     <div id="charts"></div>
     <div id="timeline" class="timeline"></div>
@@ -84,25 +88,27 @@
         <h2 id="sheet-title">판단 메모</h2>
         <span class="muted" id="sheet-sub"></span>
       </div>
-      <button type="button" class="icon-btn" id="sheet-close" aria-label="판단 메모 닫기">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-      </button>
+      <button type="button" class="icon-btn" id="sheet-close" data-tip="닫기" aria-label="판단 메모 닫기"><svg class="ico"><use href="#i-x"></use></svg></button>
     </div>
 
     <p class="muted small" id="sheet-who"></p>
 
     <div class="field-row">
-      <div class="field field-full">
+      <div class="field">
         <span class="field-name">판단</span>
-        <div class="segment wide" id="label-seg" role="group" aria-label="판단">
-          {% for v in labels %}<button type="button" data-value="{{ v }}">{{ '이상 1' if v == '1' else ('정상 0' if v == '0' else '보류') }}</button>{% endfor %}
-          <button type="button" data-value="">미정</button>
+        <div class="segment" id="label-seg" role="group" aria-label="판단">
+          <button type="button" class="icon-btn" data-value="1" data-tip="이상 1" aria-label="이상 1"><svg class="ico"><use href="#i-alert"></use></svg></button>
+          <button type="button" class="icon-btn" data-value="0" data-tip="정상 0" aria-label="정상 0"><svg class="ico"><use href="#i-check"></use></svg></button>
+          <button type="button" class="icon-btn" data-value="보류" data-tip="보류" aria-label="보류"><svg class="ico"><use href="#i-pause"></use></svg></button>
+          <button type="button" class="icon-btn" data-value="" data-tip="미정" aria-label="미정"><svg class="ico"><use href="#i-minus"></use></svg></button>
         </div>
       </div>
       <div class="field">
         <span class="field-name">모델 학습</span>
-        <div class="segment wide" id="training-seg" role="group" aria-label="모델 학습">
-          {% for v in trainings %}<button type="button" data-value="{{ v }}">{{ v }}</button>{% endfor %}
+        <div class="segment" id="training-seg" role="group" aria-label="모델 학습">
+          <button type="button" class="icon-btn" data-value="포함" data-tip="학습 포함" aria-label="학습 포함"><svg class="ico"><use href="#i-plus-circle"></use></svg></button>
+          <button type="button" class="icon-btn" data-value="제외" data-tip="학습 제외" aria-label="학습 제외"><svg class="ico"><use href="#i-ban"></use></svg></button>
+          <button type="button" class="icon-btn" data-value="미결정" data-tip="미결정" aria-label="미결정"><svg class="ico"><use href="#i-help"></use></svg></button>
         </div>
       </div>
       <label class="field">
@@ -112,16 +118,16 @@
     </div>
 
     <div class="segment" id="memo-tabs" role="group" aria-label="메모 보기">
-      <button type="button" data-tab="write" class="on">작성</button>
-      <button type="button" data-tab="preview">미리보기</button>
+      <button type="button" class="icon-btn on" data-tab="write" data-tip="작성" aria-label="작성"><svg class="ico"><use href="#i-note"></use></svg></button>
+      <button type="button" class="icon-btn" data-tab="preview" data-tip="미리보기" aria-label="미리보기"><svg class="ico"><use href="#i-eye"></use></svg></button>
     </div>
     <label class="sr-only" for="memo">메모 (마크다운)</label>
     <textarea id="memo" rows="14" placeholder="## 판단&#10;이상 1인 이유&#10;&#10;## 관찰&#10;- **CP 0.909** ...&#10;&#10;## 근거&#10;- WO-2024-..."></textarea>
     <div id="memo-preview" class="md-body soft-box" hidden></div>
 
     <div class="sheet-foot">
-      <button type="button" class="pill" id="sheet-cancel">취소</button>
-      <button type="button" class="pill primary" id="sheet-save">판단 저장</button>
+      <button type="button" class="icon-btn" id="sheet-cancel" data-tip="취소" aria-label="취소"><svg class="ico"><use href="#i-x"></use></svg></button>
+      <button type="button" class="icon-btn primary" id="sheet-save" data-tip="판단 저장" aria-label="판단 저장"><svg class="ico"><use href="#i-check"></use></svg></button>
     </div>
 
     <h3>팀원 의견</h3>
@@ -129,7 +135,7 @@
     <div class="row-gap">
       <label class="sr-only" for="comment-text">의견</label>
       <input id="comment-text" type="text" placeholder="의견 남기기" class="grow">
-      <button type="button" class="pill" id="comment-add">남기기</button>
+      <button type="button" class="icon-btn" id="comment-add" data-tip="의견 남기기" aria-label="의견 남기기"><svg class="ico"><use href="#i-send"></use></svg></button>
     </div>
 
     <h3>수정 이력</h3>
@@ -145,8 +151,8 @@
     <label class="field"><span class="field-name">제목</span><input id="snap-name" type="text"></label>
     <label class="field"><span class="field-name">메모 (마크다운)</span><textarea id="snap-note" rows="6"></textarea></label>
     <div class="sheet-foot">
-      <button type="button" class="pill" id="snap-cancel">취소</button>
-      <button type="button" class="pill primary" id="snap-save">공유하기</button>
+      <button type="button" class="icon-btn" id="snap-cancel" data-tip="취소" aria-label="취소"><svg class="ico"><use href="#i-x"></use></svg></button>
+      <button type="button" class="icon-btn primary" id="snap-save" data-tip="공유" aria-label="공유"><svg class="ico"><use href="#i-share"></use></svg></button>
     </div>
   </section>
 </div>

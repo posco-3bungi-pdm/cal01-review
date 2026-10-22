@@ -24,24 +24,69 @@ function indexRange(start, end) {
   return { from: from, to: to };
 }
 
-// ---------------------------------------------------------------- 채널 버튼
+// ---------------------------------------------------------------- 채널 버튼 (TC, OP, CP끼리 한 줄씩 묶음)
+var CHANNEL_GROUPS = [
+  { key: 'tc', name: 'TC', prefix: 'TC-' },
+  { key: 'op', name: 'OP', prefix: 'OP-' },
+  { key: 'cp', name: 'CP', prefix: 'CP-' },
+  { key: 'etc', name: '기타', prefix: '' }
+];
+
+// Z1, Z2, ... Z9 다음에 OUT1, OUT2 순서
+function channelOrder(name) {
+  var m = name.match(/Z(\d+)/);
+  if (m) return Number(m[1]);
+  m = name.match(/OUT(\d+)/);
+  if (m) return 100 + Number(m[1]);
+  return 200;
+}
+
 function drawChips() {
   var box = document.getElementById('channel-chips');
   box.innerHTML = '';
-  Object.keys(state.series.sensors).forEach(function (name) {
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'chip' + (state.channels.indexOf(name) >= 0 ? ' on' : '');
-    b.textContent = name;
-    b.setAttribute('aria-pressed', String(state.channels.indexOf(name) >= 0));
-    b.addEventListener('click', function () {
-      var at = state.channels.indexOf(name);
-      if (at >= 0) state.channels.splice(at, 1);
-      else state.channels.push(name);
-      drawChips();
-      drawCharts();
+  var left = Object.keys(state.series.sensors);
+
+  CHANNEL_GROUPS.forEach(function (group) {
+    var names = [];
+    var rest = [];
+    left.forEach(function (name) {
+      if (name.indexOf(group.prefix) === 0) names.push(name);
+      else rest.push(name);
     });
-    box.appendChild(b);
+    left = rest;
+    if (!names.length) return;
+    names.sort(function (a, b) { return channelOrder(a) - channelOrder(b); });
+
+    var row = document.createElement('div');
+    row.className = 'ch-group g-' + group.key;
+    var label = document.createElement('span');
+    label.className = 'ch-label';
+    label.textContent = group.name;
+    var chips = document.createElement('div');
+    chips.className = 'ch-chips';
+
+    names.forEach(function (name) {
+      var on = state.channels.indexOf(name) >= 0;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (on ? ' on' : '');
+      // 묶음 이름(TC-)은 줄 앞에 있으니 칩에는 뒷부분만
+      b.textContent = group.prefix ? name.slice(group.prefix.length) : name;
+      b.setAttribute('aria-label', name);
+      b.setAttribute('aria-pressed', String(on));
+      b.addEventListener('click', function () {
+        var at = state.channels.indexOf(name);
+        if (at >= 0) state.channels.splice(at, 1);
+        else state.channels.push(name);
+        drawChips();
+        drawCharts();
+      });
+      chips.appendChild(b);
+    });
+
+    row.appendChild(label);
+    row.appendChild(chips);
+    box.appendChild(row);
   });
 }
 
@@ -145,8 +190,10 @@ function loadSeries() {
     });
 }
 
-document.getElementById('z-toggle').addEventListener('change', function (e) {
-  state.showBand = e.target.checked;
+document.getElementById('z-toggle').addEventListener('click', function (e) {
+  state.showBand = !state.showBand;
+  e.currentTarget.classList.toggle('on', state.showBand);
+  e.currentTarget.setAttribute('aria-pressed', String(state.showBand));
   drawCharts();
 });
 document.addEventListener('themechange', function () { if (state.series) drawCharts(); });
@@ -224,7 +271,7 @@ function fillSheet(c) {
     div.appendChild(body);
     comments.appendChild(div);
   });
-  if (!c.comments.length) comments.textContent = '아직 의견이 없어요.';
+  if (!c.comments.length) comments.textContent = '의견 없음.';
 
   var history = document.getElementById('history');
   history.innerHTML = '';
@@ -237,7 +284,7 @@ function fillSheet(c) {
 
 function openSheet() {
   if (!state.candidate) {
-    showToast('왼쪽에서 후보를 먼저 골라 주세요.');
+    showToast('왼쪽에서 후보 먼저 선택.');
     return;
   }
   fetch('/api/candidates/' + encodeURIComponent(state.candidate.id))
@@ -303,7 +350,7 @@ document.getElementById('sheet-save').addEventListener('click', function () {
       }
     }
     closeSheet();
-    showToast('판단을 저장했어요', '다른 팀원에게 알림이 가요');
+    showToast('판단 저장됨', '팀원에게 알림 감');
   }).catch(function (err) { showToast(err.message); });
 });
 
@@ -362,7 +409,7 @@ document.getElementById('snap-save').addEventListener('click', function () {
   }).then(function () {
     snapBackdrop.hidden = true;
     document.getElementById('snap-note').value = '';
-    showToast('구간을 공유했어요', '팀원 기록에서 볼 수 있어요');
+    showToast('구간 공유됨', '팀원 기록에 올라감');
   }).catch(function (err) { showToast(err.message); });
 });
 

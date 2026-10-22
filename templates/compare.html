@@ -10,21 +10,26 @@
   <div class="row-gap">
     <label class="row-gap muted">채널
       <select id="sensor">
-        {% for s in ['CP-Z4', 'TC-Z3', 'OP-Z3', 'TC-Z4', 'OP-Z4', 'TC-Z5', 'OP-Z5', 'TC-Z6', 'OP-Z6', 'TC-Z7', 'OP-Z7', 'TC-Z8', 'OP-Z8', 'TC-Z1', 'OP-Z1', 'TC-Z2', 'OP-Z2', 'CLN-IN', 'TC-Z9', 'TC-OUT1', 'TC-OUT2'] %}
-        <option>{{ s }}</option>
-        {% endfor %}
+        <optgroup label="TC">
+          {% for s in ['TC-Z1', 'TC-Z2', 'TC-Z3', 'TC-Z4', 'TC-Z5', 'TC-Z6', 'TC-Z7', 'TC-Z8', 'TC-Z9', 'TC-OUT1', 'TC-OUT2'] %}<option>{{ s }}</option>{% endfor %}
+        </optgroup>
+        <optgroup label="OP">
+          {% for s in ['OP-Z1', 'OP-Z2', 'OP-Z3', 'OP-Z4', 'OP-Z5', 'OP-Z6', 'OP-Z7', 'OP-Z8'] %}<option>{{ s }}</option>{% endfor %}
+        </optgroup>
+        <optgroup label="CP"><option>CP-Z4</option></optgroup>
+        <optgroup label="기타"><option>CLN-IN</option></optgroup>
       </select>
     </label>
     <div class="segment" role="group" aria-label="시간 맞추기">
-      <button type="button" data-axis="elapsed" class="on">LOT 시작부터 경과 시간</button>
-      <button type="button" data-axis="clock">실제 시각</button>
+      <button type="button" class="icon-btn on" data-axis="elapsed" data-tip="LOT 시작부터 경과 시간" aria-label="LOT 시작부터 경과 시간"><svg class="ico"><use href="#i-timer"></use></svg></button>
+      <button type="button" class="icon-btn" data-axis="clock" data-tip="실제 시각" aria-label="실제 시각"><svg class="ico"><use href="#i-clock"></use></svg></button>
     </div>
   </div>
 </div>
 
 <section class="card stack">
   <div class="row-between">
-    <strong>비교할 LOT 고르기 <span class="muted" id="count"></span></strong>
+    <strong class="plate-title wood">비교할 LOT <span id="count"></span></strong>
     <div class="row-gap" id="grade-buttons"></div>
   </div>
   <div class="row-gap" id="lot-chips">
@@ -34,7 +39,7 @@
   </div>
 </section>
 
-<p class="muted small">모든 열의 세로 눈금이 같아요. 빨간 점선은 각 LOT의 평균 ±3σ, 빨간 선은 기준선 밖이에요.</p>
+<p class="muted small">모든 열의 세로 눈금 같음. 빨간 점선은 LOT별 평균 ±3σ, 빨간 선은 기준선 밖임.</p>
 <div id="columns" class="columns"></div>
 {% endblock %}
 

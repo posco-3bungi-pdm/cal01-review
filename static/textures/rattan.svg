@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+  <!-- 라탄(등나무) 짜임: 팔각 구멍 사이로 가로, 세로, 대각선 줄기가 지나감. 구멍은 비워서 뒤 색이 보이게 함 -->
+  <defs>
+    <clipPath id="cut">
+      <path clip-rule="evenodd" d="M0 0H40V40H0Z M15 8L8 15V25L15 32H25L32 25V15L25 8Z"/>
+    </clipPath>
+    <linearGradient id="h" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F3DDAE"/><stop offset=".5" stop-color="#D8B275"/><stop offset="1" stop-color="#9E7641"/>
+    </linearGradient>
+    <linearGradient id="v" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#EFD6A4"/><stop offset=".5" stop-color="#D2A96B"/><stop offset="1" stop-color="#95693A"/>
+    </linearGradient>
+    <linearGradient id="d" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#EACB93"/><stop offset="1" stop-color="#A97E48"/>
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#cut)">
+    <rect width="40" height="40" fill="#B98D57"/>
+    <!-- 가로 두 줄 (타일 경계에 걸침) -->
+    <rect x="0" y="0.6" width="40" height="4.6" fill="url(#h)"/>
+    <rect x="0" y="34.8" width="40" height="4.6" fill="url(#h)"/>
+    <!-- 세로 두 줄 -->
+    <rect x="0.6" y="0" width="4.6" height="40" fill="url(#v)"/>
+    <rect x="34.8" y="0" width="4.6" height="40" fill="url(#v)"/>
+    <!-- 대각선 줄기: 네 모서리의 매듭을 지나감 -->
+    <g stroke="url(#d)" stroke-width="4.4">
+      <path d="M-9 9L9 -9M31 49L49 31"/>
+      <path d="M31 -9L49 9M-9 31L9 49"/>
+    </g>
+    <!-- 줄기 사이 그늘 -->
+    <g stroke="#5A3D1E" stroke-opacity=".35" stroke-width=".8" fill="none">
+      <path d="M0 5.4H40M0 34.6H40M5.4 0V40M34.6 0V40"/>
+    </g>
+  </g>
+  <!-- 구멍 가장자리: 안쪽 그림자와 아래쪽 빛 -->
+  <path d="M15 8L8 15V25L15 32H25L32 25V15L25 8Z" fill="none" stroke="#3A2614" stroke-opacity=".55" stroke-width="1.4"/>
+  <path d="M8 25L15 32H25L32 25" fill="none" stroke="#FFF1D2" stroke-opacity=".35" stroke-width=".8"/>
+</svg>

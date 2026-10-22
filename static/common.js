@@ -39,7 +39,7 @@ function postJSON(url, data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data || {})
   }).then(function (r) {
-    if (!r.ok) throw new Error('저장하지 못했어요 (' + r.status + ')');
+    if (!r.ok) throw new Error('저장 실패 (' + r.status + ')');
     return r.json();
   });
 }
@@ -91,7 +91,7 @@ function showToast(text, sub) {
     if (!open) return;
 
     panel.innerHTML = '';
-    if (!items.length) panel.textContent = '새 알림이 없어요.';
+    if (!items.length) panel.textContent = '새 알림 없음.';
     items.forEach(function (it) {
       var a = document.createElement('a');
       a.href = it.link;
@@ -107,6 +107,60 @@ function showToast(text, sub) {
     postJSON('/api/notifications/read');
     count.hidden = true;
   });
+})();
+
+// ---------------------------------------------------------------- 움직임
+var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// 카드가 화면에 들어올 때 차례로 떠오름
+(function () {
+  if (calm || !('IntersectionObserver' in window)) return;
+  var watcher = new IntersectionObserver(function (entries) {
+    var n = 0;
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      entry.target.style.setProperty('--d', Math.min(n, 8) * 70 + 'ms');
+      n = n + 1;
+      entry.target.classList.remove('rise-wait');
+      entry.target.classList.add('rise');
+      watcher.unobserve(entry.target);
+    });
+  }, { rootMargin: '0px 0px -30px 0px' });
+  document.querySelectorAll('.page .card, .page-head, .footer-team, .footer-side').forEach(function (el) {
+    el.classList.add('rise-wait');
+    watcher.observe(el);
+  });
+})();
+
+// 마우스를 따라 카드가 살짝 기울고, 히어로 그림은 반대로 움직여 깊이가 생김
+function addTilt(el) {
+  var wide = el.offsetWidth > 700;
+  var most = wide ? 1.6 : 5;
+  el.addEventListener('mousemove', function (e) {
+    var r = el.getBoundingClientRect();
+    var x = (e.clientX - r.left) / r.width - 0.5;
+    var y = (e.clientY - r.top) / r.height - 0.5;
+    el.style.transform = 'perspective(1100px) rotateY(' + (x * most) + 'deg) rotateX(' + (-y * most) + 'deg) translateY(-3px)';
+    el.style.setProperty('--mx', (x + 0.5) * 100 + '%');
+    el.style.setProperty('--my', (y + 0.5) * 100 + '%');
+    el.style.setProperty('--px', (-x * 22) + 'px');
+    el.style.setProperty('--py', (-y * 14) + 'px');
+  });
+  el.addEventListener('mouseleave', function () {
+    el.style.transform = '';
+    el.style.setProperty('--px', '0px');
+    el.style.setProperty('--py', '0px');
+  });
+}
+if (!calm) document.querySelectorAll('[data-tilt]').forEach(addTilt);
+
+// 히어로가 화면 밖에 있으면 펄럭임을 멈춰서 그래프가 버벅이지 않게 함
+(function () {
+  var hero = document.querySelector('.hero');
+  if (!hero || !('IntersectionObserver' in window)) return;
+  new IntersectionObserver(function (entries) {
+    hero.classList.toggle('still', !entries[0].isIntersecting);
+  }).observe(hero);
 })();
 
 // ---------------------------------------------------------------- 그래프 하나 그리기

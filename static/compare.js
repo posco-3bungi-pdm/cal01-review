@@ -26,7 +26,7 @@ function drawChips() {
     b.classList.toggle('on', on);
     b.setAttribute('aria-pressed', String(on));
   });
-  document.getElementById('count').textContent = '선택 ' + picked.length + '개 · 고른 만큼 열이 생겨요';
+  document.getElementById('count').textContent = '선택 ' + picked.length + '개';
 }
 
 function draw() {
@@ -38,7 +38,7 @@ function draw() {
   box.innerHTML = '';
   box.style.gridTemplateColumns = 'repeat(' + Math.max(picked.length, 1) + ', minmax(0, 1fr))';
   if (!picked.length) {
-    box.textContent = '위에서 LOT을 골라 주세요.';
+    box.textContent = '위에서 LOT 선택.';
     return;
   }
 
@@ -78,7 +78,8 @@ function draw() {
       remove.type = 'button';
       remove.className = 'icon-btn small';
       remove.setAttribute('aria-label', 'LOT ' + s.lot + ' 비교에서 빼기');
-      remove.textContent = '×';
+      remove.dataset.tip = '빼기';
+      remove.innerHTML = '<svg class="ico"><use href="#i-x"></use></svg>';
       remove.addEventListener('click', function () {
         picked = picked.filter(function (p) { return p !== s.lot; });
         draw();
@@ -142,8 +143,11 @@ grades.forEach(function (grade) {
   if (count < 2) return;
   var b = document.createElement('button');
   b.type = 'button';
-  b.className = 'pill small';
-  b.textContent = grade + ' 모두';
+  b.className = 'chip grade-chip';
+  b.dataset.tip = grade + ' 모두 고르기';
+  b.setAttribute('aria-label', grade + ' 모두 고르기');
+  b.innerHTML = '<svg class="ico"><use href="#i-layers"></use></svg>';
+  b.appendChild(document.createTextNode(grade));
   b.addEventListener('click', function () {
     picked = [];
     document.querySelectorAll('#lot-chips .chip[data-grade="' + grade + '"]').forEach(function (c) { picked.push(c.dataset.lot); });

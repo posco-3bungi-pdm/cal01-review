@@ -38,6 +38,7 @@ copy .env.example .env
 3. `TEAM_ACCESS_MEMBERS_JSON` 값을 물어보면 `make_hashes.py` 결과를 붙여 넣음
 4. Postgres 화면의 External Database URL을 복사해서 내 PC `.env`의 `DATABASE_URL=`에 넣고 `python import_data.py` 실행
 5. 넣은 뒤 `.env`의 `DATABASE_URL=`은 다시 비움
+6. (선택) Render → `cal01-review` → Environment에 `CONTACT_EMAIL`을 넣으면 푸터에 이메일 아이콘이 생김
 
 ## 주의
 
