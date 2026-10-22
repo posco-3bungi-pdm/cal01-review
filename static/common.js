@@ -124,6 +124,13 @@ var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       entry.target.classList.remove('rise-wait');
       entry.target.classList.add('rise');
       watcher.unobserve(entry.target);
+      // 다 떠오르면 rise를 지움. 남겨 두면 마우스를 올렸다 뗄 때마다 떠오르기가 처음부터 다시 돌아 화면이 떨림
+      var el = entry.target;
+      el.addEventListener('animationend', function done(e) {
+        if (e.target !== el || e.animationName !== 'rise') return;
+        el.classList.remove('rise');
+        el.removeEventListener('animationend', done);
+      });
     });
   }, { rootMargin: '0px 0px -30px 0px' });
   document.querySelectorAll('.page .card, .page-head, .footer-team, .footer-side').forEach(function (el) {
@@ -135,18 +142,30 @@ var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 // 마우스를 따라 카드가 살짝 기울고, 히어로 그림은 반대로 움직여 깊이가 생김
 function addTilt(el) {
   var wide = el.offsetWidth > 700;
-  var most = wide ? 1.6 : 5;
-  el.addEventListener('mousemove', function (e) {
+  var most = wide ? 1.2 : 5;
+  var last = null;
+  var waiting = false;
+  // 마우스가 움직일 때마다 바로 바꾸지 않고, 화면을 그릴 때 한 번만 반영 (덜컹거림 방지)
+  function apply() {
+    waiting = false;
+    if (!last) return;
     var r = el.getBoundingClientRect();
-    var x = (e.clientX - r.left) / r.width - 0.5;
-    var y = (e.clientY - r.top) / r.height - 0.5;
-    el.style.transform = 'perspective(1100px) rotateY(' + (x * most) + 'deg) rotateX(' + (-y * most) + 'deg) translateY(-3px)';
+    var x = (last.clientX - r.left) / r.width - 0.5;
+    var y = (last.clientY - r.top) / r.height - 0.5;
+    el.style.transform = 'perspective(1100px) rotateY(' + (x * most).toFixed(2) + 'deg) rotateX(' + (-y * most).toFixed(2) + 'deg)';
     el.style.setProperty('--mx', (x + 0.5) * 100 + '%');
     el.style.setProperty('--my', (y + 0.5) * 100 + '%');
-    el.style.setProperty('--px', (-x * 22) + 'px');
-    el.style.setProperty('--py', (-y * 14) + 'px');
+    el.style.setProperty('--px', (-x * 22).toFixed(1) + 'px');
+    el.style.setProperty('--py', (-y * 14).toFixed(1) + 'px');
+  }
+  el.addEventListener('mousemove', function (e) {
+    last = e;
+    if (waiting) return;
+    waiting = true;
+    requestAnimationFrame(apply);
   });
   el.addEventListener('mouseleave', function () {
+    last = null;
     el.style.transform = '';
     el.style.setProperty('--px', '0px');
     el.style.setProperty('--py', '0px');
