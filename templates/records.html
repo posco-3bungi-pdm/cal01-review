@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}팀원 기록 · CAL01{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <span class="kicker">TEAM RECORDS</span>
+    <h1>팀원이 남긴 구간</h1>
+  </div>
+  <form method="get" class="row-gap">
+    <input type="hidden" name="author" value="{{ author }}">
+    <input type="hidden" name="folder" value="{{ folder }}">
+    <label class="row-gap muted">정렬
+      <select name="sort" onchange="this.form.submit()">
+        <option value="new" {{ 'selected' if sort == 'new' }}>최신순 (새 글이 맨 위)</option>
+        <option value="old" {{ 'selected' if sort == 'old' }}>오래된순</option>
+        <option value="title" {{ 'selected' if sort == 'title' }}>제목 이름순</option>
+        <option value="author" {{ 'selected' if sort == 'author' }}>작성자 이름순</option>
+      </select>
+    </label>
+    <div class="segment" role="group" aria-label="보기 방식">
+      <button type="button" data-view="grid">격자형</button>
+      <button type="button" data-view="panel">패널형</button>
+    </div>
+  </form>
+</div>
+
+<div class="row-gap chips-line">
+  <a class="chip {{ 'on' if not author }}" href="?sort={{ sort }}&folder={{ folder }}">전체 {{ total }}</a>
+  {% for a in authors %}
+  <a class="chip {{ 'on' if author == a.author }}" href="?sort={{ sort }}&folder={{ folder }}&author={{ a.author }}">{{ a.author }} {{ a.n }}</a>
+  {% endfor %}
+</div>
+
+<div class="split records-split">
+  <aside class="card folder-list" aria-label="폴더">
+    <div class="row-between">
+      <h2>폴더</h2>
+      <button type="button" class="pill small" id="folder-add">+ 새 폴더</button>
+    </div>
+    <a class="folder-row {{ 'on' if not folder }}" href="?sort={{ sort }}&author={{ author }}"><span class="dot" style="background: var(--text)"></span>모든 구간</a>
+    {% for f in folders %}
+    <div class="folder-row {{ 'on' if folder == f.id }}">
+      <button type="button" class="dot-btn" data-folder="{{ f.id }}" aria-label="{{ f.name }} 폴더 색 바꾸기"><span class="dot" style="background: {{ f.color }}"></span></button>
+      <a href="?sort={{ sort }}&author={{ author }}&folder={{ f.id }}">{{ f.name }}</a>
+    </div>
+    {% endfor %}
+    <a class="folder-row {{ 'on' if folder == 'none' }}" href="?sort={{ sort }}&author={{ author }}&folder=none"><span class="dot" style="background: var(--track)"></span>미분류</a>
+
+    <div class="palette soft-box" id="palette" hidden>
+      <span class="muted small" id="palette-title">폴더 색</span>
+      <div class="palette-grid">
+        {% for c in colors %}<button type="button" class="swatch" data-color="{{ c }}" style="background: {{ c }}" aria-label="{{ c }} 색"></button>{% endfor %}
+      </div>
+    </div>
+  </aside>
+
+  <section class="records-main">
+    {% if not snaps %}<p class="muted">고른 조건에 맞는 구간이 없어요.</p>{% endif %}
+
+    <!-- 격자형 -->
+    <div class="grid-view" id="grid-view">
+      {% for s in snaps %}
+      <article class="card snap-card">
+        <img src="{{ url_for('snapshot_image', sid=s.id) }}" alt="{{ s.title }} 그래프" loading="lazy" onerror="this.remove()">
+        <div class="snap-body">
+          <div class="row-gap">
+            {% if s.folder %}<span class="folder-chip"><span class="dot" style="background: {{ s.folder.color }}"></span>{{ s.folder.name }}</span>{% endif %}
+            <span class="new-badge" data-created="{{ s.created_at }}" hidden>새 글</span>
+          </div>
+          <strong>{{ s.title }}</strong>
+          <span class="muted small">{{ s.author }} · {{ s.created_at[5:16] }}{% if s.lot_no %} · LOT {{ s.lot_no }} {{ s.sensor or '' }}{% endif %}</span>
+          <div class="md-body clamp" data-md="{{ s.note }}"></div>
+          <button type="button" class="pill small open-panel" data-id="{{ s.id }}">자세히</button>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    <!-- 패널형 -->
+    <div class="panel-view" id="panel-view" hidden>
+      <div class="card panel-list">
+        {% for s in snaps %}
+        <button type="button" class="panel-item" data-id="{{ s.id }}">
+          {% if s.folder %}<span class="dot" style="background: {{ s.folder.color }}"></span>{% else %}<span class="dot" style="background: var(--track)"></span>{% endif %}
+          <span><strong>{{ s.title }}</strong><span class="muted small">{{ s.author }} · {{ s.created_at[5:16] }}</span></span>
+        </button>
+        {% endfor %}
+      </div>
+      {% for s in snaps %}
+      <article class="card panel-detail" data-id="{{ s.id }}" hidden>
+        {% if s.folder %}<span class="folder-chip"><span class="dot" style="background: {{ s.folder.color }}"></span>{{ s.folder.name }}</span>{% endif %}
+        <h2>{{ s.title }}</h2>
+        <span class="muted">{{ s.author }} · {{ s.created_at[5:16] }}{% if s.lot_no %} · LOT {{ s.lot_no }} {{ s.sensor or '' }} · {{ (s.start_at or '')[5:16] }} ~ {{ (s.end_at or '')[11:16] }}{% endif %}</span>
+        <img src="{{ url_for('snapshot_image', sid=s.id) }}" alt="{{ s.title }} 그래프" loading="lazy" onerror="this.remove()">
+        <div class="md-body" data-md="{{ s.note }}"></div>
+        <div class="row-gap">
+          {% if s.lot_no %}<a class="pill" href="{{ url_for('review') }}?lot={{ s.lot_no }}">검토 화면에서 열기</a>{% endif %}
+          <label class="row-gap muted small">폴더 옮기기
+            <select class="move-folder" data-id="{{ s.id }}">
+              <option value="">미분류</option>
+              {% for f in folders %}<option value="{{ f.id }}" {{ 'selected' if s.folder_id == f.id }}>{{ f.name }}</option>{% endfor %}
+            </select>
+          </label>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='records.js') }}"></script>
+{% endblock %}

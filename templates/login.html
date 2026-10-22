@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAL01 공동 검토 · 접속</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script>try { document.documentElement.dataset.theme = localStorage.getItem('theme') || 'light'; } catch (e) {}</script>
+</head>
+<body class="login-body">
+<div class="login-card">
+  <img class="hero-img hero-light" src="{{ url_for('static', filename='images/hero-light.webp') }}" alt="">
+  <img class="hero-img hero-dark" src="{{ url_for('static', filename='images/hero-dark.webp') }}" alt="">
+  <form method="post" class="login-form">
+    <span class="kicker">CAL01 · TEAM REVIEW</span>
+    <h1>소둔로 공동 검토</h1>
+    <p class="muted">받은 접속 코드를 넣으면 내 이름으로 판단을 남길 수 있어요.</p>
+    <label for="code">접속 코드</label>
+    <input id="code" name="code" type="password" autocomplete="off" required autofocus>
+    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+    <button type="submit" class="primary">들어가기</button>
+  </form>
+</div>
+</body>
+</html>

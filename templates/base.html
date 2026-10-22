@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}CAL01 공동 검토{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script>
+  // 저장해 둔 밝기를 화면이 그려지기 전에 적용
+  try { document.documentElement.dataset.theme = localStorage.getItem('theme') || 'light'; } catch (e) {}
+</script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="{{ url_for('review') }}"><strong>CAL01</strong><span>소둔로 공동 검토</span></a>
+  <nav class="nav">
+    <a href="{{ url_for('review') }}" class="{{ 'on' if request.endpoint == 'review' }}">검토</a>
+    <a href="{{ url_for('records') }}" class="{{ 'on' if request.endpoint == 'records' }}">팀원 기록</a>
+    <a href="{{ url_for('compare') }}" class="{{ 'on' if request.endpoint == 'compare' }}">LOT 나란히 비교</a>
+  </nav>
+  <div class="tools">
+    <div class="segment" role="group" aria-label="화면 밝기">
+      <button type="button" data-theme-set="light">라이트</button>
+      <button type="button" data-theme-set="dark">다크</button>
+    </div>
+    <div class="bell-wrap">
+      <button type="button" class="icon-btn" id="bell" aria-label="팀 알림" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+        <span class="badge" id="bell-count" hidden></span>
+      </button>
+      <div class="bell-panel" id="bell-panel" hidden></div>
+    </div>
+    <span class="who">{{ session.user.name }}</span>
+    <a class="pill" href="{{ url_for('logout') }}">나가기</a>
+  </div>
+</header>
+
+<main class="page">
+{% block content %}{% endblock %}
+</main>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='common.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

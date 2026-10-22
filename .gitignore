@@ -1,0 +1,8 @@
+# 내 PC에만 두는 것 (비밀값, 시험용 DB)
+.env
+local.db
+*.db
+.venv/
+__pycache__/
+*.pyc
+.claude/
