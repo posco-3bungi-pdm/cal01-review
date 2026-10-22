@@ -39,6 +39,7 @@ copy .env.example .env
 4. Postgres 화면의 External Database URL을 복사해서 내 PC `.env`의 `DATABASE_URL=`에 넣고 `python import_data.py` 실행
 5. 넣은 뒤 `.env`의 `DATABASE_URL=`은 다시 비움
 6. (선택) Render → `cal01-review` → Environment에 `CONTACT_EMAIL`을 넣으면 푸터에 이메일 아이콘이 생김
+7. 1초 원본 넣기: 4번처럼 `DATABASE_URL`을 넣고 `python import_raw.py` 실행 (`raw_chunks` 표만 다시 채움, 팀원 판단은 안 건드림). 안 넣으면 구간 확대가 1분 평균으로만 보임
 
 ## 주의
 

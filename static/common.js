@@ -171,14 +171,18 @@ var shadePlugin = {
   beforeDatasetsDraw: function (chart, args, opts) {
     var area = chart.chartArea;
     var x = chart.scales.x;
+    chart.ctx.save();
+    // 그래프 칸 밖(눈금 자리)으로는 칠하지 않음
+    chart.ctx.beginPath();
+    chart.ctx.rect(area.left, area.top, area.right - area.left, area.bottom - area.top);
+    chart.ctx.clip();
     (opts.marks || []).forEach(function (m) {
       var left = x.getPixelForValue(m.from);
       var right = x.getPixelForValue(m.to);
-      chart.ctx.save();
       chart.ctx.fillStyle = m.color;
       chart.ctx.fillRect(left, area.top, Math.max(right - left, 3), area.bottom - area.top);
-      chart.ctx.restore();
     });
+    chart.ctx.restore();
   }
 };
 

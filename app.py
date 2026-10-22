@@ -12,6 +12,7 @@ import json
 import os
 import statistics
 import time
+from datetime import datetime
 from functools import wraps
 
 from flask import Flask, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
@@ -26,6 +27,7 @@ LABELS = ["1", "0", "보류"]
 TRAININGS = ["포함", "제외", "미결정"]
 OPERATIONS = ["미정", "운전 중", "정지", "재가동", "그 외"]
 FOLDER_COLORS = ["#F59E0B", "#2563EB", "#059669", "#C2261F", "#7C3AED", "#DB2777", "#8A94A6", "#0EA5E9"]
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "")  # 푸터 이메일 (Render 환경변수에 넣음)
 
 
@@ -210,8 +212,13 @@ def api_series():
         abort(404)
     lot = found[0]
     series = json.loads(lot["series"])
+    return jsonify({"lot": lot["lot_no"], "grade": lot["grade"], "start": lot["start_at"], "end": lot["end_at"],
+                    "time": series["time"], "excluded": series["excluded"], "sensors": series["sensors"],
+                    "stats": series_stats(series)})
 
-    # 제외 구간을 뺀 값으로 평균과 표준편차 (Z-score 기준선)
+
+def series_stats(series):
+    """제외 구간을 뺀 값으로 평균과 표준편차 (Z-score 기준선)"""
     stats = {}
     for sensor, values in series["sensors"].items():
         usable = []
@@ -221,8 +228,65 @@ def api_series():
         if len(usable) > 1:
             stats[sensor] = {"mean": statistics.fmean(usable), "std": statistics.pstdev(usable),
                              "median": statistics.median(usable)}
-    return jsonify({"lot": lot["lot_no"], "grade": lot["grade"], "start": lot["start_at"], "end": lot["end_at"],
-                    "time": series["time"], "excluded": series["excluded"], "sensors": series["sensors"], "stats": stats})
+    return stats
+
+
+RAW_MAX_MINUTES = 120  # 시간창이 이보다 짧으면 1초 원본, 길면 1분 평균
+
+
+@app.route("/api/window")
+@login_required
+def api_window():
+    """고른 시간창의 값. 2시간 이하이고 1초 원본이 있으면 원본, 아니면 1분 평균"""
+    lot = request.args.get("lot", "")
+    start = request.args.get("start", "")
+    end = request.args.get("end", "")
+    wanted = []
+    for name in request.args.get("channels", "").split(","):
+        if name:
+            wanted.append(name)
+
+    found = sql("SELECT series FROM lots WHERE lot_no = ?", (lot,))
+    if not found or len(start) != 19 or len(end) != 19:
+        abort(404)
+
+    minutes = (datetime.strptime(end, TIME_FORMAT) - datetime.strptime(start, TIME_FORMAT)).total_seconds() / 60
+    mode = "minute"
+    data = None
+    stats = None
+    if minutes <= RAW_MAX_MINUTES:
+        rows = sql("SELECT data FROM raw_chunks WHERE lot_no = ? AND hour_start >= ? AND hour_start <= ? ORDER BY hour_start",
+                   (lot, start[:13] + ":00:00", end[:13] + ":00:00"))
+        if rows:
+            mode = "raw"
+            data = {"time": [], "excluded": [], "sensors": {}}
+            for name in wanted:
+                data["sensors"][name] = []
+            for r in rows:
+                part = json.loads(r["data"])
+                data["time"].extend(part["time"])
+                data["excluded"].extend(part["excluded"])
+                for name in wanted:
+                    data["sensors"][name].extend(part["sensors"].get(name, [None] * len(part["time"])))
+            saved = sql("SELECT data FROM raw_chunks WHERE lot_no = ? AND hour_start = 'stats'", (lot,))
+            stats = json.loads(saved[0]["data"]) if saved else {}
+    if data is None:
+        data = json.loads(found[0]["series"])
+        stats = series_stats(data)
+
+    # 시간창 안의 값만 잘라서 보냄
+    out = {"mode": mode, "time": [], "excluded": [], "sensors": {}, "stats": {}}
+    for name in wanted:
+        out["sensors"][name] = []
+        out["stats"][name] = stats.get(name)
+    for i, t in enumerate(data["time"]):
+        if start <= t <= end:
+            out["time"].append(t)
+            out["excluded"].append(data["excluded"][i])
+            for name in wanted:
+                values = data["sensors"].get(name)
+                out["sensors"][name].append(values[i] if values else None)
+    return jsonify(out)
 
 
 @app.route("/api/work-records")

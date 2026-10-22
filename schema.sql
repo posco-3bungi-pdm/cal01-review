@@ -96,3 +96,12 @@ CREATE TABLE IF NOT EXISTS snapshots (
     created_at TEXT,
     updated_at TEXT
 )
+;
+
+-- 1초 원본 값 (구간 확대용). LOT별 한 시간씩 JSON 글자로 저장, hour_start='stats'는 LOT 전체 평균, 표준편차
+CREATE TABLE IF NOT EXISTS raw_chunks (
+    lot_no TEXT,
+    hour_start TEXT,
+    data TEXT,
+    PRIMARY KEY (lot_no, hour_start)
+)

@@ -72,10 +72,34 @@
       <div id="channel-chips" class="channel-groups"></div>
       <button type="button" class="icon-btn danger on" id="z-toggle" aria-pressed="true" data-tip="Z-score 기준선 ±3σ" aria-label="Z-score 기준선 ±3σ"><svg class="ico"><use href="#i-sigma"></use></svg></button>
     </div>
-    <p class="muted small">빨간 점선은 LOT 평균 ±3σ, 빨간 선은 기준선 밖임. 회색 바탕은 제외 구간, 노란 바탕은 고른 후보임.</p>
+    <!-- 시간창: 처음엔 LOT 전체. 그래프를 가로로 끌면 그 구간만 확대 -->
+    <div class="time-bar">
+      <div class="segment" role="group" aria-label="시간창">
+        <button type="button" class="icon-btn" id="win-earlier" data-tip="앞쪽 더 보기" aria-label="앞쪽 더 보기"><svg class="ico"><use href="#i-earlier"></use></svg></button>
+        <button type="button" class="icon-btn" id="win-narrow" data-tip="시간창 줄이기 (절반)" aria-label="시간창 줄이기"><svg class="ico"><use href="#i-minus"></use></svg></button>
+        <button type="button" class="icon-btn" id="win-widen" data-tip="시간창 늘리기 (앞뒤로 2배)" aria-label="시간창 늘리기"><svg class="ico"><use href="#i-plus"></use></svg></button>
+        <button type="button" class="icon-btn" id="win-later" data-tip="뒤쪽 더 보기" aria-label="뒤쪽 더 보기"><svg class="ico"><use href="#i-later"></use></svg></button>
+        <button type="button" class="icon-btn" id="win-full" data-tip="LOT 전체" aria-label="LOT 전체"><svg class="ico"><use href="#i-full"></use></svg></button>
+      </div>
+      <div class="win-text">
+        <strong id="win-info">불러오는 중</strong>
+        <span class="mode-badge" id="win-mode"></span>
+      </div>
+    </div>
+
+    <div class="mini-box">
+      <div class="chart-head">LOT 전체 <span id="mini-name"></span> · 끌어서 시간창 고르기</div>
+      <div class="chart-holder mini"><canvas id="mini" role="img" aria-label="LOT 전체 작은 그래프"></canvas></div>
+    </div>
+
+    <p class="muted small">그래프를 가로로 끌면 그 구간 확대. 세로선은 모든 그래프와 정비 기록에서 같은 시각임. 빨간 점선은 LOT 평균 ±3σ, 빨간 선은 기준선 밖, 회색은 제외 구간, 노란색은 고른 후보임.</p>
 
     <div id="charts"></div>
-    <div id="timeline" class="timeline"></div>
+
+    <div class="lanes-box">
+      <div class="chart-head">정비, 조업 기록 <span id="lanes-note"></span> · 막대는 작업 시간, 세모는 감지 시각, 마름모는 조업 이벤트</div>
+      <div class="chart-holder lanes"><canvas id="lanes" role="img" aria-label="정비, 조업 기록 줄"></canvas></div>
+    </div>
   </section>
 </div>
 

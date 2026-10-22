@@ -497,6 +497,27 @@ textarea { width: 100%; resize: vertical; font-family: ui-monospace, Consolas, m
 .g-etc { --plate-color: linear-gradient(145deg, #7C8A9C, #3F4B5B); --plate-edge-color: #1F2733; --chip-on: linear-gradient(145deg, #7C8A9C, #3F4B5B); --chip-on-ink: #FFFFFF; --chip-glow: rgba(124, 138, 156, 0.45); }
 .ch-chips .chip { min-width: 46px; justify-content: center; font-weight: 700; }
 
+/* 시간창 막대: 버튼 묶음 + 지금 보는 시간 */
+.time-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.win-text { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.win-text strong { font-size: 15px; font-variant-numeric: tabular-nums; }
+.mode-badge {
+  padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+  color: var(--muted); background: var(--track);
+  box-shadow: inset 1px 1px 3px var(--paper-shade);
+}
+.mode-badge.raw {
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #FF7AC6, #7A8BFF, #55D6E6);
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+  box-shadow: 0 0 12px rgba(122, 139, 255, 0.45);
+}
+.mini-box, .lanes-box { padding: 8px 14px 10px; border-radius: 18px; background: var(--soft); box-shadow: inset 2px 2px 6px var(--paper-shade), inset -2px -2px 6px var(--paper-light); }
+.chart-holder.mini { height: 64px; }
+.chart-holder.lanes { height: 200px; }
+#charts { display: flex; flex-direction: column; gap: 12px; }
+#charts canvas, #mini, #lanes { cursor: crosshair; user-select: none; }
 .chart-box { padding: 10px 14px; border-radius: 18px; background: var(--soft); box-shadow: inset 2px 2px 6px var(--paper-shade), inset -2px -2px 6px var(--paper-light); animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
 .chart-head { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
 .chart-holder { position: relative; height: 170px; }
