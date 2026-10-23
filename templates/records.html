@@ -62,7 +62,7 @@
     <div class="grid-view" id="grid-view">
       {% for s in snaps %}
       <article class="card snap-card holo" data-tilt>
-        <img src="{{ url_for('snapshot_image', sid=s.id) }}" alt="{{ s.title }} 그래프" loading="lazy" onerror="this.remove()">
+        <a class="snap-img" href="{{ s.open_url }}" aria-label="{{ s.title }} 구간 열기"><img src="{{ url_for('snapshot_image', sid=s.id) }}" alt="{{ s.title }} 그래프" loading="lazy" onerror="this.remove()"></a>
         <div class="snap-body">
           <div class="row-gap">
             {% if s.folder %}<span class="folder-chip"><span class="dot" style="background: {{ s.folder.color }}"></span>{{ s.folder.name }}</span>{% endif %}
@@ -71,7 +71,10 @@
           <strong>{{ s.title }}</strong>
           <span class="muted small">{{ s.author }} · {{ s.created_at[5:16] }}{% if s.lot_no %} · LOT {{ s.lot_no }} {{ s.sensor or '' }}{% endif %}</span>
           <div class="md-body clamp" data-md="{{ s.note }}"></div>
-          <button type="button" class="icon-btn small open-panel" data-id="{{ s.id }}" data-tip="자세히" aria-label="자세히"><svg class="ico"><use href="#i-arrow"></use></svg></button>
+          <div class="snap-actions">
+            <button type="button" class="icon-btn small open-panel" data-id="{{ s.id }}" data-tip="자세히" aria-label="자세히"><svg class="ico"><use href="#i-arrow"></use></svg></button>
+            <a class="icon-btn small primary" href="{{ s.open_url }}" data-tip="이 구간 열기" aria-label="이 구간 열기"><svg class="ico"><use href="#i-open"></use></svg></a>
+          </div>
         </div>
       </article>
       {% endfor %}
@@ -95,7 +98,7 @@
         <img src="{{ url_for('snapshot_image', sid=s.id) }}" alt="{{ s.title }} 그래프" loading="lazy" onerror="this.remove()">
         <div class="md-body" data-md="{{ s.note }}"></div>
         <div class="row-gap">
-          {% if s.lot_no %}<a class="icon-btn" href="{{ url_for('review') }}?lot={{ s.lot_no }}" data-tip="검토 화면에서 열기" aria-label="검토 화면에서 열기"><svg class="ico"><use href="#i-open"></use></svg></a>{% endif %}
+          {% if s.lot_no %}<a class="icon-btn primary" href="{{ s.open_url }}" data-tip="이 구간 열기" aria-label="이 구간 열기"><svg class="ico"><use href="#i-open"></use></svg></a>{% endif %}
           <label class="row-gap muted small">폴더 옮기기
             <select class="move-folder" data-id="{{ s.id }}">
               <option value="">미분류</option>

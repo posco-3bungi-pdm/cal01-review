@@ -14,6 +14,7 @@ var state = {
   charts: [],
   mini: null,
   lanes: null,
+  focus: null,       // 스냅샷에서 열었을 때 그 구간 {from, to} (ms), 노랗게 칠함
   version: 'v6',     // 라벨 띠로 볼 버전 ('' 이면 끔)
   labels: null,      // 그 버전의 1분 라벨 (/api/labels)
   labelX: []         // 위 시각들을 숫자(ms)로
@@ -65,6 +66,8 @@ function channelOrder(name) {
 }
 
 function drawChips() {
+  // 고른 채널을 기억해서 LOT을 바꾸거나 다시 와도 그대로
+  try { localStorage.setItem('channels', state.channels.join(',')); } catch (e) {}
   var box = document.getElementById('channel-chips');
   box.innerHTML = '';
   var left = Object.keys(state.series.sensors);
@@ -382,8 +385,21 @@ function setView(a, b) {
   loadWindow();
 }
 
+// 지금 시간창과 채널을 주소에 적어 둠 (새로고침, 주소 공유, 뒤로 가기에도 같은 구간이 열림)
+function keepInAddress() {
+  var params = new URLSearchParams(location.search);
+  params.set('lot', window.PAGE.lot);
+  params.set('from', toText(state.view.start));
+  params.set('to', toText(state.view.end));
+  params.set('ch', state.channels.join(','));
+  if (state.focus) params.set('mark', toText(state.focus.from) + '~' + toText(state.focus.to));
+  else params.delete('mark');
+  history.replaceState(null, '', '?' + params.toString() + location.hash);
+}
+
 var loadCount = 0;
 function loadWindow() {
+  keepInAddress();
   loadCount = loadCount + 1;
   var mine = loadCount;
   var start = toText(state.view.start);
@@ -419,6 +435,9 @@ function windowMarks(xs) {
   });
   if (state.candidate) {
     marks.push({ from: toMs(state.candidate.start), to: toMs(state.candidate.end), color: cssVar('--pick') });
+  }
+  if (state.focus) {
+    marks.push({ from: state.focus.from, to: state.focus.to, color: cssVar('--pick') });
   }
   return marks;
 }
@@ -612,9 +631,38 @@ function loadSeries() {
       data.time.forEach(function (t) { state.seriesX.push(toMs(t)); });
       document.getElementById('lot-info').textContent =
         'LOT ' + data.lot + ' · ' + data.grade + ' · ' + data.start.slice(5, 16) + ' ~ ' + data.end.slice(5, 16);
+      // 채널: 주소의 ch → 지난번 고른 채널 → 기본값 (LOT을 바꿔도 고른 채널이 남게)
+      var params = new URLSearchParams(location.search);
+      var saved = params.get('ch');
+      if (!saved) {
+        try { saved = localStorage.getItem('channels'); } catch (e) {}
+      }
+      if (saved) {
+        var wanted = [];
+        saved.split(',').forEach(function (name) {
+          if (data.sensors[name] && wanted.indexOf(name) < 0) wanted.push(name);
+        });
+        if (wanted.length) state.channels = wanted;
+      }
       drawChips();
-      state.view = { start: state.seriesX[0], end: state.seriesX[state.seriesX.length - 1] };
-      loadWindow();
+
+      // 주소의 mark = 스냅샷 구간 (노랗게 칠함), from, to = 지금 시간창
+      // 스냅샷에서 열면 mark만 있으므로 그 구간을 앞뒤로 조금 넓혀서 봄
+      var mark = (params.get('mark') || '').split('~');
+      if (mark.length === 2 && mark[0].length === 19 && mark[1].length === 19 && toMs(mark[1]) > toMs(mark[0])) {
+        state.focus = { from: toMs(mark[0]), to: toMs(mark[1]) };
+      }
+      var from = params.get('from') || '';
+      var to = params.get('to') || '';
+      if (from.length === 19 && to.length === 19 && toMs(to) > toMs(from)) {
+        setView(toMs(from), toMs(to));
+      } else if (state.focus) {
+        var pad = Math.max(2 * 60000, (state.focus.to - state.focus.from) / 4);
+        setView(state.focus.from - pad, state.focus.to + pad);
+      } else {
+        state.view = { start: state.seriesX[0], end: state.seriesX[state.seriesX.length - 1] };
+        loadWindow();
+      }
       loadLabels();
     });
 }
@@ -633,6 +681,7 @@ document.querySelectorAll('.cand-open').forEach(function (btn) {
     document.querySelectorAll('.cand.selected').forEach(function (el) { el.classList.remove('selected'); });
     btn.parentElement.classList.add('selected');
     state.candidate = { id: btn.dataset.id, sensor: btn.dataset.sensor, start: btn.dataset.start, end: btn.dataset.end };
+    state.focus = null;
     if (state.channels.indexOf(btn.dataset.sensor) < 0) state.channels.unshift(btn.dataset.sensor);
     drawChips();
     var a = toMs(btn.dataset.start);

@@ -176,7 +176,7 @@ def records():
         where.append("folder_id = ?")
         params.append(folder)
 
-    text = "SELECT id, author, title, note, lot_no, sensor, start_at, end_at, folder_id, created_at FROM snapshots"
+    text = "SELECT id, author, title, note, lot_no, sensor, start_at, end_at, context, folder_id, created_at FROM snapshots"
     if where:
         text = text + " WHERE " + " AND ".join(where)
     text = text + " ORDER BY " + order.get(sort, order["new"])
@@ -191,9 +191,25 @@ def records():
         folder_by_id[f["id"]] = f
     for s in snaps:
         s["folder"] = folder_by_id.get(s["folder_id"])
+        s["open_url"] = snapshot_url(s)
 
     return render_template("records.html", snaps=snaps, folders=folders, authors=authors, total=total,
                            sort=sort, author=author, folder=folder, colors=FOLDER_COLORS)
+
+
+def snapshot_url(s):
+    """스냅샷의 LOT, 시간창, 채널 그대로 검토 화면을 여는 주소"""
+    channels = []
+    try:
+        channels = json.loads(s.get("context") or "{}").get("channels") or []
+    except ValueError:
+        channels = []
+    if not channels and s.get("sensor"):
+        channels = [s["sensor"]]
+    if not s.get("lot_no") or not s.get("start_at") or not s.get("end_at"):
+        return url_for("review", lot=s.get("lot_no")) if s.get("lot_no") else url_for("records")
+    # mark = 스냅샷 구간. 검토 화면이 이 구간을 노랗게 칠하고 앞뒤로 조금 넓혀서 보여 줌
+    return url_for("review", lot=s["lot_no"], mark=s["start_at"] + "~" + s["end_at"], ch=",".join(channels))
 
 
 @app.route("/compare")
@@ -452,8 +468,10 @@ def api_notifications():
                  "WHERE h.action = '판단 저장' AND h.author <> ? ORDER BY h.created_at DESC LIMIT 20", (me(),)):
         items.append({"time": r["created_at"], "text": r["author"] + " 판단 남김",
                       "sub": r["lot_no"] + " · " + r["sensor"], "link": "/?lot=" + r["lot_no"] + "#" + r["candidate_id"]})
-    for r in sql("SELECT author, created_at, title FROM snapshots WHERE author <> ? ORDER BY created_at DESC LIMIT 20", (me(),)):
-        items.append({"time": r["created_at"], "text": r["author"] + " 구간 공유", "sub": r["title"], "link": "/records"})
+    for r in sql("SELECT author, created_at, title, lot_no, sensor, start_at, end_at, context FROM snapshots "
+                 "WHERE author <> ? ORDER BY created_at DESC LIMIT 20", (me(),)):
+        # 알림을 누르면 그 구간이 바로 열림
+        items.append({"time": r["created_at"], "text": r["author"] + " 구간 공유", "sub": r["title"], "link": snapshot_url(r)})
     for r in sql("SELECT m.author, m.created_at, c.lot_no, c.sensor FROM comments m JOIN candidates c ON c.id = m.candidate_id "
                  "WHERE m.author <> ? ORDER BY m.created_at DESC LIMIT 20", (me(),)):
         items.append({"time": r["created_at"], "text": r["author"] + " 의견 남김", "sub": r["lot_no"] + " · " + r["sensor"], "link": "/?lot=" + r["lot_no"]})
