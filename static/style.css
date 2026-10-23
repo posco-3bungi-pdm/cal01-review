@@ -515,6 +515,15 @@ textarea { width: 100%; resize: vertical; font-family: ui-monospace, Consolas, m
   animation: shimmer 3s linear infinite;
   box-shadow: 0 0 12px rgba(122, 139, 255, 0.45);
 }
+/* 라벨 버전 고르기와 범례 */
+.version-bar { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.version-bar .chip { min-width: 46px; justify-content: center; font-weight: 700; }
+.legend { display: inline-flex; align-items: center; font-size: 12px; color: var(--muted); }
+.lg { display: inline-block; width: 16px; height: 8px; margin: 0 5px 0 12px; border-radius: 2px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); }
+.lg:first-child { margin-left: 0; }
+.lg.s1 { background: #F08C00; }
+.lg.d1 { background: #C2261F; }
+.lg.c0 { background: #0F8A6A; }
 .mini-box, .lanes-box { padding: 8px 14px 10px; border-radius: 18px; background: var(--soft); box-shadow: inset 2px 2px 6px var(--paper-shade), inset -2px -2px 6px var(--paper-light); }
 .chart-holder.mini { height: 64px; }
 .chart-holder.lanes { height: 200px; }

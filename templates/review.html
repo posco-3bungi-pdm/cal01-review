@@ -85,6 +85,15 @@
         <strong id="win-info">불러오는 중</strong>
         <span class="mode-badge" id="win-mode"></span>
       </div>
+      <!-- 라벨 버전: 고른 버전에서 LABEL=1인 분을 그래프 아래쪽 띠로 보여 줌. 켜진 버전을 다시 누르면 끔 -->
+      <div class="version-bar">
+        <div class="segment" id="version-seg" role="group" aria-label="라벨 버전">
+          <button type="button" class="chip" data-version="v4" data-tip="v2 + 공통 움직임 해제 (1분)">v4</button>
+          <button type="button" class="chip" data-version="v5" data-tip="v4 + 새로 찾은 공통 움직임 해제 (1분)">v5</button>
+          <button type="button" class="chip" data-version="v6" data-tip="v5 + 팀 판단 반영 (1분)">v6</button>
+        </div>
+        <span class="legend"><i class="lg s1"></i>통계 1<i class="lg d1"></i>확정 1<i class="lg c0"></i>해제</span>
+      </div>
     </div>
 
     <div class="mini-box">
@@ -92,7 +101,7 @@
       <div class="chart-holder mini"><canvas id="mini" role="img" aria-label="LOT 전체 작은 그래프"></canvas></div>
     </div>
 
-    <p class="muted small">그래프를 가로로 끌면 그 구간 확대. 세로선은 모든 그래프와 정비 기록에서 같은 시각임. 빨간 점선은 LOT 평균 ±3σ, 빨간 선은 기준선 밖, 회색은 제외 구간, 노란색은 고른 후보임.</p>
+    <p class="muted small">그래프를 가로로 끌면 그 구간 확대. 세로선은 모든 그래프와 정비 기록에서 같은 시각임. 빨간 점선은 LOT 평균 ±3σ, 빨간 선은 기준선 밖, 회색은 제외 구간, 노란색은 고른 후보임. 그래프 바닥 띠는 고른 버전의 라벨임.</p>
 
     <div id="charts"></div>
 

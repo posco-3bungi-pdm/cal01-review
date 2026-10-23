@@ -13,8 +13,15 @@ var state = {
   drag: null,        // 끌고 있는 구간 {a, b, chart}
   charts: [],
   mini: null,
-  lanes: null
+  lanes: null,
+  version: 'v6',     // 라벨 띠로 볼 버전 ('' 이면 끔)
+  labels: null,      // 그 버전의 1분 라벨 (/api/labels)
+  labelX: []         // 위 시각들을 숫자(ms)로
 };
+try {
+  var savedVersion = localStorage.getItem('labelVersion');
+  if (savedVersion !== null) state.version = savedVersion;
+} catch (e) {}
 
 // ---------------------------------------------------------------- 시각 바꾸기 ('2024-07-07 18:40:00' ↔ ms)
 function toMs(text) {
@@ -145,6 +152,110 @@ var crossPlugin = {
   }
 };
 
+// ---------------------------------------------------------------- 버전별 라벨 띠 (그래프 바닥)
+// 1 통계 1(STAT만), 2 확정 1(DOMAIN 1), 3 해제(STAT 1이었지만 DOMAIN 0)
+var LABEL_COLORS = { 1: '#F08C00', 2: '#C2261F', 3: '#0F8A6A' };
+var LABEL_BAND = 8;  // 띠 높이(px)
+
+var labelPlugin = {
+  id: 'labelband',
+  afterDatasetsDraw: function (chart, args, opts) {
+    var runs = opts.runs || [];
+    if (!runs.length) return;
+    var area = chart.chartArea;
+    var x = chart.scales.x;
+    var ctx = chart.ctx;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(area.left, area.top, area.right - area.left, area.bottom - area.top);
+    ctx.clip();
+    runs.forEach(function (r) {
+      var a = x.getPixelForValue(r.from);
+      var w = Math.max(x.getPixelForValue(r.to) - a, 2);
+      // 확정 1은 위로 옅은 기둥을 세워 그래프에서도 바로 보이게
+      if (r.code === 2) {
+        ctx.fillStyle = 'rgba(194, 38, 31, 0.08)';
+        ctx.fillRect(a, area.top, w, area.bottom - area.top - LABEL_BAND);
+      }
+      ctx.fillStyle = LABEL_COLORS[r.code];
+      ctx.fillRect(a, area.bottom - LABEL_BAND, w, LABEL_BAND);
+    });
+    ctx.restore();
+  }
+};
+
+// 센서가 속한 구역 (라벨 열 이름의 앞부분)
+function zoneOf(sensor) {
+  if (sensor === 'CLN-IN') return 'CLN';
+  if (sensor.indexOf('OUT') >= 0) return 'COOLING';
+  var m = sensor.match(/Z(\d)/);
+  return m ? 'Z' + m[1] : null;
+}
+
+// 같은 숫자가 이어지는 분들을 하나의 띠 조각으로
+function labelRuns(zone) {
+  var runs = [];
+  if (!state.labels || !zone || !state.labels.zones[zone]) return runs;
+  var codes = state.labels.zones[zone];
+  var cur = null;
+  for (var i = 0; i < codes.length; i++) {
+    var code = codes[i];
+    var t = state.labelX[i];
+    if (cur && code === cur.code && t - cur.last <= 60000) {
+      cur.last = t;
+      cur.to = t + 60000;
+    } else if (code === 1 || code === 2 || code === 3) {
+      cur = { from: t, to: t + 60000, last: t, code: code };
+      runs.push(cur);
+    } else {
+      cur = null;
+    }
+  }
+  return runs;
+}
+
+// 시간창 안에서 LABEL=1(통계 1 + 확정 1)인 분 수
+function labelOnes(runs) {
+  var minutes = 0;
+  runs.forEach(function (r) {
+    if (r.code === 3) return;
+    var a = Math.max(r.from, state.view.start);
+    var b = Math.min(r.to, state.view.end);
+    if (b > a) minutes = minutes + Math.round((b - a) / 60000);
+  });
+  return minutes;
+}
+
+function loadLabels() {
+  document.querySelectorAll('#version-seg .chip').forEach(function (b) {
+    var on = b.dataset.version === state.version;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  if (!state.version) {
+    state.labels = null;
+    state.labelX = [];
+    if (state.win) drawWindow();
+    return;
+  }
+  fetch('/api/labels?lot=' + encodeURIComponent(window.PAGE.lot) + '&version=' + state.version)
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      state.labels = data;
+      state.labelX = [];
+      data.time.forEach(function (t) { state.labelX.push(toMs(t)); });
+      if (state.win) drawWindow();
+    });
+}
+
+document.querySelectorAll('#version-seg .chip').forEach(function (b) {
+  b.addEventListener('click', function () {
+    state.version = state.version === b.dataset.version ? '' : b.dataset.version;
+    try { localStorage.setItem('labelVersion', state.version); } catch (e) {}
+    loadLabels();
+  });
+});
+
 var redrawWaiting = false;
 function redrawSoon() {
   if (redrawWaiting) return;
@@ -204,7 +315,7 @@ function timeAxis(min, max) {
 }
 
 // 시각(ms)과 값으로 선 그래프 하나
-function timeChart(canvas, points, band, marks) {
+function timeChart(canvas, points, band, marks, runs) {
   var red = cssVar('--red');
   var line = cssVar('--line');
   function outside(v) {
@@ -228,7 +339,7 @@ function timeChart(canvas, points, band, marks) {
   var chart = new Chart(canvas, {
     type: 'line',
     data: { datasets: datasets },
-    plugins: [shadePlugin, crossPlugin],
+    plugins: [shadePlugin, labelPlugin, crossPlugin],
     options: {
       animation: false,
       responsive: true,
@@ -239,6 +350,7 @@ function timeChart(canvas, points, band, marks) {
       plugins: {
         legend: { display: false },
         shade: { marks: marks },
+        labelband: { runs: runs || [] },
         tooltip: {
           filter: function (item) { return item.datasetIndex === 0; },
           callbacks: { title: function (items) { return toText(items[0].parsed.x).slice(5); } }
@@ -341,7 +453,9 @@ function drawWindow() {
     wrap.className = 'chart-box';
     var head = document.createElement('div');
     head.className = 'chart-head';
-    head.textContent = name + (stat ? '  ·  평균 ' + stat.mean.toFixed(3) + ', 표준편차 ' + stat.std.toFixed(3) : '');
+    var runs = labelRuns(zoneOf(name));
+    head.textContent = name + (stat ? '  ·  평균 ' + stat.mean.toFixed(3) + ', 표준편차 ' + stat.std.toFixed(3) : '') +
+      (state.labels ? '  ·  ' + state.version + ' LABEL 1: ' + labelOnes(runs) + '분' : '');
     var holder = document.createElement('div');
     holder.className = 'chart-holder';
     var canvas = document.createElement('canvas');
@@ -351,7 +465,7 @@ function drawWindow() {
     wrap.appendChild(head);
     wrap.appendChild(holder);
     box.appendChild(wrap);
-    state.charts.push(timeChart(canvas, points, band, marks));
+    state.charts.push(timeChart(canvas, points, band, marks, runs));
   });
 
   drawLanes();
@@ -359,6 +473,14 @@ function drawWindow() {
 }
 
 // ---------------------------------------------------------------- 위쪽 작은 띠: LOT 전체에서 지금 시간창 위치
+function miniMarks(name) {
+  var marks = [{ from: state.view.start, to: state.view.end, color: cssVar('--pick') }];
+  labelRuns(zoneOf(name)).forEach(function (r) {
+    if (r.code === 1 || r.code === 2) marks.push({ from: r.from, to: r.to, color: 'rgba(194, 38, 31, 0.35)' });
+  });
+  return marks;
+}
+
 function drawMini() {
   if (state.mini) state.mini.destroy();
   var name = state.channels[0] || 'CP-Z4';
@@ -381,7 +503,8 @@ function drawMini() {
       plugins: {
         legend: { display: false },
         tooltip: { enabled: false },
-        shade: { marks: [{ from: state.view.start, to: state.view.end, color: cssVar('--pick') }] }
+        // 지금 시간창(노랑)과, 고른 버전에서 LABEL=1인 곳(빨강)을 함께 보여 줘서 어디를 확대할지 찾기 쉽게
+        shade: { marks: miniMarks(name) }
       },
       scales: {
         x: { type: 'linear', min: state.seriesX[0], max: state.seriesX[state.seriesX.length - 1], display: false },
@@ -492,6 +615,7 @@ function loadSeries() {
       drawChips();
       state.view = { start: state.seriesX[0], end: state.seriesX[state.seriesX.length - 1] };
       loadWindow();
+      loadLabels();
     });
 }
 
@@ -681,7 +805,7 @@ function snapTitleLines() {
   return [
     'LOT ' + s.lot + ' · ' + s.grade,
     toText(state.view.start).slice(5) + ' ~ ' + toText(state.view.end).slice(5) + ' · ' + spanText(viewSpan()) + ' · ' + (state.win.mode === 'raw' ? '1초 원본' : '1분 평균'),
-    state.channels.join(', ')
+    state.channels.join(', ') + (state.labels ? '  ·  라벨 ' + state.version + ' (바닥 띠: 주황 통계 1, 빨강 확정 1, 초록 해제)' : '')
   ];
 }
 

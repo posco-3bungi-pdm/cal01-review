@@ -289,6 +289,24 @@ def api_window():
     return jsonify(out)
 
 
+LABEL_VERSIONS = ["v4", "v5", "v6"]
+
+
+@app.route("/api/labels")
+@login_required
+def api_labels():
+    """버전별 1분 라벨 (구역마다 0 평소, 1 통계 1, 2 확정 1, 3 해제, 빈칸 제외)"""
+    version = request.args.get("version", "")
+    if version not in LABEL_VERSIONS:
+        abort(404)
+    found = sql("SELECT data FROM labels WHERE lot_no = ? AND version = ?", (request.args.get("lot", ""), version))
+    if not found:
+        return jsonify({"version": version, "time": [], "zones": {}})
+    data = json.loads(found[0]["data"])
+    data["version"] = version
+    return jsonify(data)
+
+
 @app.route("/api/work-records")
 @login_required
 def api_work_records():

@@ -105,3 +105,13 @@ CREATE TABLE IF NOT EXISTS raw_chunks (
     data TEXT,
     PRIMARY KEY (lot_no, hour_start)
 )
+;
+
+-- 버전별 라벨 (v4, v5, v6). LOT, 버전마다 1분 단위 구역별 숫자를 JSON 글자로 저장
+-- 0 평소, 1 통계 1, 2 확정 1(DOMAIN), 3 해제(통계 1이었지만 DOMAIN 0), 빈칸은 제외 구간
+CREATE TABLE IF NOT EXISTS labels (
+    lot_no TEXT,
+    version TEXT,
+    data TEXT,
+    PRIMARY KEY (lot_no, version)
+)
