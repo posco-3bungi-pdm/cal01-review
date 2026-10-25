@@ -1,140 +1,95 @@
-"""README용 애니메이션 SVG (다크, 라이트 두 벌). pdm-project figures/readme/make_readme_svg.py와 같은 스타일
+"""README용 애니메이션 SVG: 종이 장부와 도장 스타일 (라이트는 크림 종이, 다크는 어두운 크라프트지)
 
 실행 (저장소 루트에서):
     python docs/readme/make_readme_svg.py
+
+- 외부 도구 없이 문자열로 SVG를 씀. 애니메이션은 SVG 표준(SMIL)이라 GitHub에서 그대로 움직임
+- pdm-project(양각 카드), cal01-monitor(관제실 HUD), 조직 프로필(외부 위젯)과 다르게 줄 노트, 붙임 쪽지, 테이프, 연필 선, 도장으로 꾸밈
+- 만드는 파일: hero, flow (각각 -dark.svg, -light.svg)
 """
 
+import math
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FONT = "Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif"
+SERIF = "'Nanum Myeongjo', 'Noto Serif KR', 'Apple SD Gothic Neo', serif"
+SANS = "Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif"
 
 THEMES = {
-    "dark": {"bg": "#0d110e", "bg2": "#161d17", "plate": "#1a231c", "plate2": "#212c23", "deep": "#080b09",
-             "ink": "#eef4ec", "sub": "#9fb39d", "accent": "#a8ff3e", "warm": "#ffb347", "hot": "#ff5a5f", "cool": "#5ec8ff",
-             "hi": "#ffffff", "lo": "#000000", "hi_a": "0.10", "lo_a": "0.55", "shadow_a": "0.45", "grain_a": "0.05"},
-    "light": {"bg": "#eef1ea", "bg2": "#e4e9df", "plate": "#f7f9f4", "plate2": "#eef2ea", "deep": "#d9dfd4",
-              "ink": "#17221b", "sub": "#5b6b5d", "accent": "#3f8f1a", "warm": "#d9741a", "hot": "#d8323a", "cool": "#1f7fb8",
-              "hi": "#ffffff", "lo": "#1a2a1e", "hi_a": "0.9", "lo_a": "0.18", "shadow_a": "0.18", "grain_a": "0.06"},
+    "light": {"paper": "#f7f2e8", "paper2": "#efe7d8", "rule": "#d8ccb6", "margin": "#d9847a", "ink": "#2b2a33", "pencil": "#8a8378",
+              "red": "#c8322b", "blue": "#2b5fb3", "gray": "#8d8a84", "note": "#f7df6a", "note_ink": "#4a3f12", "tape": "#ffffff", "shadow_a": "0.18"},
+    "dark": {"paper": "#24211c", "paper2": "#2d2922", "rule": "#3d382f", "margin": "#8d5a52", "ink": "#efe7d6", "pencil": "#a89f8f",
+             "red": "#ff6a5e", "blue": "#7aa6ff", "gray": "#a39f97", "note": "#e3c84a", "note_ink": "#2c2608", "tape": "#ffffff", "shadow_a": "0.5"},
 }
 
 
 def defs(t):
     return (
         '<defs>\n'
-        '<filter id="shadow" x="-10%%" y="-10%%" width="120%%" height="140%%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="%s"/></filter>\n'
-        '<filter id="shadow-sm" x="-10%%" y="-10%%" width="120%%" height="140%%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="%s"/></filter>\n'
-        '<filter id="inset" x="-10%%" y="-10%%" width="120%%" height="130%%">'
-        '<feOffset dx="0" dy="3"/><feGaussianBlur stdDeviation="3" result="ob"/>'
-        '<feComposite operator="out" in="SourceGraphic" in2="ob" result="inv"/>'
-        '<feFlood flood-color="#000" flood-opacity="0.55" result="col"/>'
-        '<feComposite operator="in" in="col" in2="inv" result="sh"/>'
-        '<feComposite operator="over" in="sh" in2="SourceGraphic"/></filter>\n'
-        '<filter id="glow" x="-50%%" y="-50%%" width="200%%" height="200%%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>\n'
-        '<filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0.6 0"/></filter>\n'
-        '<linearGradient id="plate" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="%s"/><stop offset="1" stop-color="%s"/></linearGradient>\n'
-        '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="%s"/><stop offset="1" stop-color="%s"/></linearGradient>\n'
-        '<radialGradient id="coin" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="%s" stop-opacity="0.9"/><stop offset="0.55" stop-color="%s" stop-opacity="0"/><stop offset="1" stop-color="%s" stop-opacity="0.35"/></radialGradient>\n'
-        '</defs>\n' % (t["shadow_a"], t["shadow_a"], t["plate"], t["plate2"], t["bg"], t["bg2"], t["hi"], t["hi"], t["lo"]))
+        '<pattern id="ruled" width="40" height="28" patternUnits="userSpaceOnUse"><line x1="0" y1="27.5" x2="40" y2="27.5" stroke="%s" stroke-width="1"/></pattern>\n'
+        '<filter id="shadow" x="-10%%" y="-10%%" width="130%%" height="140%%"><feDropShadow dx="2" dy="5" stdDeviation="5" flood-color="#000" flood-opacity="%s"/></filter>\n'
+        '<filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.6"/></filter>\n'
+        '<filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0.5  0 0 0 0 0.45  0 0 0 0 0.35  0 0 0 0.5 0"/></filter>\n'
+        '</defs>\n' % (t["rule"], t["shadow_a"]))
 
 
-def head(width, height, t):
-    s = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d" font-family="%s">\n'
-         % (width, height, width, height, FONT))
+def head(W, H, t, margin=True):
+    s = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d" font-family="%s">\n' % (W, H, W, H, SANS))
     s += defs(t)
-    s += '<rect width="%d" height="%d" rx="22" fill="url(#bg)"/>\n' % (width, height)
-    s += '<rect width="%d" height="%d" rx="22" filter="url(#grain)" opacity="%s"/>\n' % (width, height, t["grain_a"])
+    s += '<rect width="%d" height="%d" rx="6" fill="%s"/>\n' % (W, H, t["paper"])
+    s += '<rect width="%d" height="%d" rx="6" filter="url(#grain)" opacity="0.07"/>\n' % (W, H)
+    s += '<rect width="%d" height="%d" rx="6" fill="url(#ruled)"/>\n' % (W, H)
+    if margin:
+        s += '<line x1="96" y1="0" x2="96" y2="%d" stroke="%s" stroke-opacity="0.8" stroke-width="1.5"/>\n' % (H, t["margin"])
+        for y in range(70, H - 40, 120):
+            s += '<circle cx="48" cy="%d" r="9" fill="%s" stroke="%s" stroke-opacity="0.6"/>\n' % (y, t["paper2"], t["rule"])
     return s
 
 
-def text(x, y, s, size, fill, weight="normal", anchor="start", extra=""):
-    return '<text x="%s" y="%s" font-size="%s" fill="%s" font-weight="%s" text-anchor="%s" %s>%s</text>\n' % (
-        x, y, size, fill, weight, anchor, extra, s)
+def text(x, y, s, size, fill, weight="normal", anchor="start", serif=False, extra=""):
+    fam = ' font-family="%s"' % SERIF if serif else ""
+    return '<text x="%s" y="%s" font-size="%s" fill="%s" font-weight="%s" text-anchor="%s"%s %s>%s</text>\n' % (
+        x, y, size, fill, weight, anchor, fam, extra, s)
 
 
-def emboss_text(t, x, y, s, size, fill, weight="bold", anchor="start"):
-    out = text(x + 1, y + 2, s, size, t["lo"], weight, anchor, 'opacity="%s"' % t["lo_a"])
-    out += text(x - 1, y - 1, s, size, t["hi"], weight, anchor, 'opacity="%s"' % t["hi_a"])
-    out += text(x, y, s, size, fill, weight, anchor)
-    return out
+def pencil_line(t, d, dur=9, t0=0.05, t1=0.25, col=None, width=2.2):
+    """연필로 긋는 선: 한 바퀴마다 다시 그려짐"""
+    col = col or t["pencil"]
+    return ('<path d="%s" fill="none" stroke="%s" stroke-width="%s" stroke-linecap="round" filter="url(#rough)" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100">'
+            '<animate attributeName="stroke-dashoffset" values="100;100;0;0" keyTimes="0;%.3f;%.3f;1" dur="%ss" repeatCount="indefinite"/></path>\n' % (d, col, width, t0, t1, dur))
 
 
-def raised(t, x, y, w, h, r=16, fill="url(#plate)", back=True, edge=None):
-    s = ""
-    if back:
-        s += '<rect x="%d" y="%d" width="%d" height="%d" rx="%d" fill="%s" opacity="0.55"/>\n' % (x + 10, y + 12, w, h, r, t["deep"])
-    s += '<rect x="%d" y="%d" width="%d" height="%d" rx="%d" fill="%s" filter="url(#shadow)"/>\n' % (x, y, w, h, r, fill)
-    if edge:
-        s += '<rect x="%d" y="%d" width="%d" height="%d" rx="%d" fill="none" stroke="%s" stroke-opacity="0.55" stroke-width="1.5"/>\n' % (x, y, w, h, r, edge)
-    s += '<path d="M %d %d L %d %d Q %d %d %d %d L %d %d" fill="none" stroke="%s" stroke-opacity="%s" stroke-width="1.5"/>\n' % (
-        x + 1, y + h - r, x + 1, y + r, x + 1, y + 1, x + r, y + 1, x + w - r, y + 1, t["hi"], t["hi_a"])
-    s += '<path d="M %d %d L %d %d Q %d %d %d %d L %d %d" fill="none" stroke="%s" stroke-opacity="%s" stroke-width="1.5"/>\n' % (
-        x + r, y + h - 1, x + w - r, y + h - 1, x + w - 1, y + h - 1, x + w - 1, y + h - r, x + w - 1, y + r, t["lo"], t["lo_a"])
+def slip(t, x, y, w, h, rot=0, fill=None, tape=True):
+    """종이 쪽지: 살짝 기울고 그림자, 위에 테이프"""
+    fill = fill or t["paper2"]
+    s = '<g transform="rotate(%s %d %d)">\n' % (rot, x + w / 2, y + h / 2)
+    s += '<rect x="%d" y="%d" width="%d" height="%d" fill="%s" filter="url(#shadow)"/>\n' % (x, y, w, h, fill)
+    s += '<rect x="%d" y="%d" width="%d" height="%d" fill="none" stroke="%s" stroke-opacity="0.6"/>\n' % (x, y, w, h, t["rule"])
+    if tape:
+        s += '<rect x="%d" y="%d" width="64" height="18" fill="%s" fill-opacity="0.45" transform="rotate(-4 %d %d)"/>\n' % (x + w / 2 - 32, y - 9, t["tape"], x + w / 2, y)
+    s += "</g>" + chr(10)
     return s
 
 
-def inset(t, x, y, w, h, r=12, fill=None):
-    fill = fill or t["deep"]
-    s = '<rect x="%d" y="%d" width="%d" height="%d" rx="%d" fill="%s" filter="url(#inset)"/>\n' % (x, y, w, h, r, fill)
-    s += '<path d="M %d %d L %d %d" stroke="%s" stroke-opacity="%s" stroke-width="1.5"/>\n' % (x + r, y + h + 1, x + w - r, y + h + 1, t["hi"], t["hi_a"])
+def stamp(t, cx, cy, label, col, dur=9, t0=0.3, r=24, rot=-12):
+    """도장: 커다랗게 떠 있다가 쾅 찍힘"""
+    s = '<g transform="translate(%d %d) rotate(%d)">' % (cx, cy, rot)
+    s += '<g opacity="0"><animateTransform attributeName="transform" type="scale" values="2.6;2.6;1;1" keyTimes="0;%.3f;%.3f;1" dur="%ss" repeatCount="indefinite" calcMode="spline" keySplines="0 0 1 1;0.1 0.9 0.2 1;0 0 1 1"/>' % (t0, t0 + 0.04, dur)
+    s += '<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;%.3f;%.3f;1" dur="%ss" repeatCount="indefinite"/>' % (t0, t0 + 0.02, dur)
+    s += '<circle r="%d" fill="none" stroke="%s" stroke-width="3" filter="url(#rough)"/>' % (r, col)
+    s += '<circle r="%d" fill="none" stroke="%s" stroke-width="1" stroke-opacity="0.7"/>' % (r - 5, col)
+    s += '<text y="%d" font-size="%d" font-weight="bold" fill="%s" text-anchor="middle" font-family="%s">%s</text>' % (r * 0.36, int(r * 0.95) if len(label) == 1 else int(r * 0.6), col, SERIF, label)
+    s += "</g></g>\n"
     return s
 
 
-def groove(t, x1, y1, x2, y2, dash=""):
-    d = ' stroke-dasharray="%s"' % dash if dash else ""
-    s = '<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-opacity="%s" stroke-width="3"%s/>\n' % (x1, y1, x2, y2, t["lo"], t["lo_a"], d)
-    s += '<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-opacity="%s" stroke-width="1.5"%s/>\n' % (x1, y1 + 2, x2, y2 + 2, t["hi"], t["hi_a"], d)
-    return s
-
-
-def coin(t, cx, cy, r, fill, extra=""):
-    s = '<circle cx="%d" cy="%d" r="%d" fill="%s" filter="url(#shadow-sm)"%s/>\n' % (cx, cy, r, fill, extra)
-    s += '<circle cx="%d" cy="%d" r="%d" fill="url(#coin)"/>\n' % (cx, cy, r)
-    return s
-
-
-def pipe(t, x1, x2, y, col, label="", dur=1.6):
-    """연결 관: 파인 홈 속을 빛 덩이가 지나가고 끝에 화살촉. label은 무엇이 흐르는지"""
-    s = inset(t, x1, y - 8, x2 - x1 - 10, 16, 8)
-    s += '<polygon points="%d,%d %d,%d %d,%d" fill="%s" filter="url(#shadow-sm)"/>\n' % (x2 - 14, y - 11, x2, y, x2 - 14, y + 11, col)
-    for begin in [0, dur / 2]:
-        s += ('<rect x="%d" y="%d" width="22" height="8" rx="4" fill="%s" filter="url(#glow)" opacity="0">'
-              '<animate attributeName="x" from="%d" to="%d" dur="%ss" begin="%ss" repeatCount="indefinite"/>'
-              '<animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="%ss" begin="%ss" repeatCount="indefinite"/></rect>\n'
-              % (x1 + 2, y - 4, col, x1 + 2, x2 - 36, dur, begin, dur, begin))
-    if label:
-        s += text((x1 + x2) / 2 - 5, y - 16, label, 11, t["sub"], anchor="middle")
-    return s
-
-
-def curve_pipe(t, d, col, label="", lx=0, ly=0, dur=2.4):
-    """굽은 관: 홈 선 위로 캡슐이 경로(d)를 따라 감. 화살촉은 호출 쪽에서 붙임"""
-    s = '<path d="%s" fill="none" stroke="%s" stroke-opacity="%s" stroke-width="10" stroke-linecap="round"/>\n' % (d, t["lo"], t["lo_a"])
-    s += '<path d="%s" fill="none" stroke="%s" stroke-opacity="%s" stroke-width="3" stroke-linecap="round"/>\n' % (d, t["hi"], t["hi_a"])
-    s += '<path d="%s" fill="none" stroke="%s" stroke-opacity="0.35" stroke-width="2"/>\n' % (d, col)
-    s += ('<rect x="-14" y="-4" width="28" height="8" rx="4" fill="%s" filter="url(#glow)">'
-          '<animateMotion dur="%ss" repeatCount="indefinite" rotate="auto" path="%s"/></rect>\n' % (col, dur, d))
-    if label:
-        s += text(lx, ly, label, 11.5, col, "bold", "middle")
-    return s
-
-
-def up_arrow(t, x, y, col):
-    return '<polygon points="%d,%d %d,%d %d,%d" fill="%s" filter="url(#shadow-sm)"/>\n' % (x - 9, y + 10, x + 9, y + 10, x, y - 4, col)
-
-
-def pill(t, x, y, label, col, size=14):
-    w = 26 + len(label) * size * 0.68
-    s = raised(t, x, y, w, 36, 18, back=False, edge=col)
-    s += coin(t, x + 18, y + 18, 7, col)
-    s += text(x + 34, y + 23, label, size, t["ink"])
-    return s, w
-
-
-def layered_decor(t, x, y, r, col):
-    s = ""
-    for i, op in enumerate(["0.05", "0.08", "0.12"]):
-        s += '<circle cx="%d" cy="%d" r="%d" fill="%s" opacity="%s"/>\n' % (x - i * 26, y + i * 18, r - i * 28, col, op)
+def sticky(t, x, y, w, h, lines, rot=-3):
+    s = '<g transform="rotate(%s %d %d)">' % (rot, x + w / 2, y + h / 2)
+    s += '<rect x="%d" y="%d" width="%d" height="%d" fill="%s" filter="url(#shadow)"/>\n' % (x, y, w, h, t["note"])
+    s += '<path d="M %d %d L %d %d L %d %d Z" fill="#000" fill-opacity="0.08"/>\n' % (x + w - 22, y + h, x + w, y + h - 22, x + w, y + h)
+    for i, line in enumerate(lines):
+        s += text(x + 14, y + 26 + i * 20, line, 13, t["note_ink"], "bold" if i == 0 else "normal")
+    s += "</g>\n"
     return s
 
 
@@ -145,67 +100,93 @@ def write(name, theme, body):
     print("wrote", os.path.relpath(path))
 
 
+# ---------------------------------------------------------------- 1. 머리: 검토 노트
 def hero(theme):
     t = THEMES[theme]
-    W, H = 1200, 360
+    W, H = 1200, 420
     s = head(W, H, t)
-    s += layered_decor(t, 1060, 90, 190, t["warm"])
-    s += layered_decor(t, 210, 350, 150, t["cool"])
-    s += text(56, 78, "CAL01 · TEAM REVIEW · 소둔로 공동 검토", 15, t["sub"], extra='letter-spacing="3"')
-    s += emboss_text(t, 56, 134, "같은 구간을 보고,", 40, t["ink"])
-    s += emboss_text(t, 56, 186, "판단을 함께 남김", 40, t["warm"])
-    s += text(56, 226, "채널 변화, 작업 기록, 팀원 판단을 한 화면에. 판단은 검토 표가 되어 다음 정답으로 돌아감", 16, t["sub"])
-    x = 56
-    for label, col in [("후보: 3σ 통계 + 모델 (출처 숨김)", t["cool"]), ("판단: 1 · 0 · 보류, 메모 · 고정 · 스냅샷 · 댓글", t["warm"]),
-                       ("검토 표 CSV → 정답 v6, v7", t["accent"])]:
-        piece, w = pill(t, x, 250, label, col)
-        s += piece
-        x += w + 14
-    # 아래: 60분 띠 위에 판단이 찍히는 모습 (예시)
-    s += inset(t, 40, 300, 1120, 44, 16)
-    cell, gap, x0 = 14, 4, 56
-    states = "000SS000S00000SSSS000S000000SS00S0000000SSS00000S00000000TTT"
-    colors = {"0": t["plate2"], "S": t["hot"], "T": t["accent"]}
-    for i, st in enumerate(states):
-        cx = x0 + i * (cell + gap)
-        s += '<rect x="%d" y="312" width="%d" height="20" rx="4" fill="%s" fill-opacity="%s" filter="url(#shadow-sm)">' % (cx, cell, colors[st], "0.6" if st == "0" else "0.95")
-        if st in "ST":
-            s += '<animate attributeName="fill-opacity" values="0.95;0.35;0.95" dur="3s" begin="%.2fs" repeatCount="indefinite"/>' % (i * 0.05)
-        s += '</rect>\n'
+    s += text(124, 52, "CAL01 공동 검토 노트", 13, t["pencil"], extra='letter-spacing="3"')
+    s += text(124, 112, "같은 구간을 보고,", 42, t["ink"], "bold", serif=True)
+    s += text(124, 164, "판단을 함께 남김", 42, t["red"], "bold", serif=True)
+    s += pencil_line(t, "M 124 176 C 200 170, 300 182, 470 174", t0=0.04, t1=0.16, col=t["red"], width=3)
+    s += text(124, 200, "3σ 후보와 모델 후보를 LOT 그래프 위에 띄우고, 팀원이 1 · 0 · 보류와 메모를 남김", 14, t["pencil"])
+    s += text(124, 222, "그 판단이 검토 표(domain_decisions.csv)가 되어 pdm-project의 다음 정답으로 돌아감", 14, t["pencil"])
+
+    # 오른쪽: 검토 쪽지
+    x, y, w, h = 780, 54, 360, 230
+    s += slip(t, x, y, w, h, rot=2)
+    s += '<g transform="rotate(2 %d %d)">\n' % (x + w / 2, y + h / 2)
+    s += text(x + 22, y + 36, "검토 #T01", 16, t["ink"], "bold", serif=True)
+    s += text(x + w - 22, y + 36, "LOT 069 · CP-Z4", 13, t["pencil"], anchor="end")
+    s += text(x + 22, y + 64, "7/8 02:28 ~ 02:42 · 14분 · CP 0.45 → 0.88", 13, t["ink"])
+    s += text(x + 22, y + 90, "메모: 2시간 뒤 전기 BM 절연 저하, O링 교체", 12.5, t["pencil"])
+    s += '<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-opacity="0.8"/>\n' % (x + 22, y + 106, x + w - 22, y + 106, t["rule"])
+    s += text(x + 22, y + 134, "판단", 13, t["pencil"])
+    for i, (label, col) in enumerate([("1", t["red"]), ("0", t["blue"]), ("보류", t["gray"])]):
+        cx = x + 110 + i * 92
+        s += '<circle cx="%d" cy="%d" r="24" fill="none" stroke="%s" stroke-opacity="0.5" stroke-dasharray="3 3"/>\n' % (cx, y + 150, t["rule"])
+        s += text(cx, y + 190, label, 12, t["pencil"], anchor="middle")
+    s += stamp(t, x + 110, y + 150, "1", t["red"], t0=0.32)
+    s += text(x + 22, y + h - 18, "판단자: 박민호 · 2026-10-20", 11.5, t["pencil"])
+    s += "</g>\n"
+    s += sticky(t, 640, 250, 150, 70, ["노란 구간", "= 후보 시각"], rot=-5)
+
+    # 아래: 검토 칸 60개가 차례로 체크됨
+    bx, by, cell, gap = 124, 300, 30, 6
+    s += text(bx, by - 12, "모델 후보 60건 · 팀이 하나씩 확인", 12, t["pencil"])
+    marks = ["1", "0", "0", "보", "0", "1", "0", "0", "0", "보"]
+    for i in range(30):
+        x0 = bx + i * (cell + gap)
+        s += '<rect x="%d" y="%d" width="%d" height="%d" fill="%s" stroke="%s" stroke-opacity="0.8"/>\n' % (x0, by, cell, cell, t["paper2"], t["rule"])
+        m = marks[i % len(marks)]
+        col = t["red"] if m == "1" else (t["blue"] if m == "0" else t["gray"])
+        t0 = 0.45 + i * 0.016
+        s += ('<text x="%d" y="%d" font-size="%d" font-weight="bold" fill="%s" text-anchor="middle" font-family="%s" opacity="0">'
+              '<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;%.3f;%.3f;1" dur="9s" repeatCount="indefinite"/>%s</text>\n'
+              % (x0 + cell / 2, by + 21, 15 if m != "보" else 12, col, SERIF, t0, t0 + 0.01, m))
+    s += text(bx + 30 * (cell + gap) + 8, by + 21, "… 60", 13, t["pencil"])
+    s += pencil_line(t, "M %d %d L %d %d" % (bx, by + cell + 14, bx + 30 * (cell + gap) - 6, by + cell + 14), t0=0.9, t1=0.98, width=1.6)
+    s += text(bx, by + cell + 36, "검토 표 → 정답 v7 · 판단자가 \"AI 제안\"인 것은 팀이 확인해 이름을 바꾼 것만 넣음", 12, t["pencil"])
     s += "</svg>\n"
     write("hero", theme, s)
 
 
+# ---------------------------------------------------------------- 2. 흐름: 쪽지 네 장
 def flow(theme):
     t = THEMES[theme]
-    W, H = 1200, 400
-    s = head(W, H, t)
-    s += layered_decor(t, 1120, 40, 150, t["accent"])
-    s += emboss_text(t, 56, 48, "후보가 들어와 판단이 되어 정답으로 돌아가는 길", 20, t["ink"])
-    cards = [("1 후보가 들어옴", ["3σ 통계 후보 (v1 ~ v3, import_data)", "모델 후보 60개 (import_candidates)", "1초 원본 (import_raw)"], t["cool"]),
-             ("2 검토 화면", ["LOT 고르기, 채널 고르기", "그래프에 후보 구간 노란 표시", "라벨 띠 v4 · v5 · v6, 정비 기록 줄"], t["accent"]),
-             ("3 팀 판단", ["1 · 0 · 보류와 판단 메모", "고정, 댓글, 구간 스냅샷", "팀원 기록, LOT 나란히 비교"], t["warm"]),
-             ("4 검토 표로", ["/export/domain_decisions.csv", "export_candidates.py (M → v7)", "pdm-project 정답 v6, v7"], t["hot"])]
-    cw, ch, y0 = 238, 170, 78
-    xs = [56, 339, 622, 905]
-    for (title, lines, col), x in zip(cards, xs):
-        s += raised(t, x, y0, cw, ch, 18)
-        s += '<rect x="%d" y="%d" width="10" height="%d" rx="5" fill="%s" filter="url(#shadow-sm)"/>\n' % (x + 16, y0 + 18, ch - 36, col)
-        s += '<rect x="%d" y="%d" width="3" height="%d" rx="1.5" fill="%s" opacity="0.5"/>\n' % (x + 18, y0 + 22, ch - 44, t["hi"])
-        s += emboss_text(t, x + 40, y0 + 44, title, 19, t["ink"])
-        s += inset(t, x + 36, y0 + 62, cw - 52, 92, 10)
+    W, H = 1200, 360
+    s = head(W, H, t, margin=False)
+    s += text(56, 44, "후보가 들어와 정답으로 돌아가는 길", 20, t["ink"], "bold", serif=True)
+    slips = [("후보 들어옴", ["3σ 통계 후보 (06 노트북)", "모델 후보 60건 (12 노트북)", "import_candidates.py"], -2, t["blue"]),
+             ("검토 화면", ["LOT 그래프 위 노란 구간", "채널, 시간창, 라벨 띠", "정비 기록 줄, 1초 원본"], 1.5, t["pencil"]),
+             ("팀 판단", ["1 · 0 · 보류와 메모", "팀원 의견, 수정 이력", "팀 알림"], -1, t["red"]),
+             ("검토 표", ["export_candidates.py", "domain_decisions.csv", "VERSION v6, v7"], 2, t["blue"])]
+    sw, sh, y0 = 236, 168, 76
+    xs = [56, 356, 656, 956]
+    for (title, lines, rot, col), x in zip(slips, xs):
+        s += slip(t, x, y0, sw, sh, rot=rot)
+        s += '<g transform="rotate(%s %d %d)">\n' % (rot, x + sw / 2, y0 + sh / 2)
+        s += text(x + 18, y0 + 40, title, 19, t["ink"], "bold", serif=True)
+        s += '<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="2" stroke-opacity="0.7"/>\n' % (x + 18, y0 + 50, x + 18 + len(title) * 19, y0 + 50, col)
         for i, line in enumerate(lines):
-            s += coin(t, x + 52, y0 + 84 + i * 26, 4, col)
-            s += text(x + 64, y0 + 89 + i * 26, line, 11.5, t["ink"])
-    # 카드 사이 관: 무엇이 흐르는지 적음
-    for x, label, col in [(294, "후보 목록", t["cool"]), (577, "노란 구간", t["accent"]), (860, "1 · 0 · 보류", t["warm"])]:
-        s += pipe(t, x, x + 45, y0 + 90, col, label)
-    # 되돌아오는 관: 검토 표가 정답이 되고, 새 정답으로 뽑은 다음 후보가 1번으로 들어옴
-    yb = y0 + ch + 2
-    d = "M 1024 %d C 1024 %d, 175 %d, 175 %d" % (yb, yb + 58, yb + 58, yb + 2)
-    s += curve_pipe(t, d, t["accent"], "검토 표 CSV → 정답 v6, v7 → 다음 후보 (두 번째 바퀴)", 600, yb + 80, dur=3.0)
-    s += up_arrow(t, 175, yb - 4, t["accent"])
-    s += text(W / 2, 384, "판단자 이름이 그대로 남음. \"AI 제안\"은 팀이 확인해 이름을 바꾼 것만 정답에 들어감", 12, t["sub"], anchor="middle")
+            s += text(x + 18, y0 + 82 + i * 26, line, 13, t["ink"])
+        s += "</g>\n"
+    # 쪽지 사이 연필 화살표
+    for i in range(3):
+        xa, xb = xs[i] + sw + 8, xs[i + 1] - 8
+        ym = y0 + sh / 2
+        d = "M %d %d C %d %d, %d %d, %d %d" % (xa, ym, xa + 20, ym - 18, xb - 20, ym + 14, xb, ym)
+        s += pencil_line(t, d, t0=0.1 + i * 0.12, t1=0.2 + i * 0.12, width=2.4)
+        s += ('<polyline points="%d,%d %d,%d %d,%d" fill="none" stroke="%s" stroke-width="2.4" stroke-linecap="round" opacity="0">'
+              '<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;%.3f;%.3f;1" dur="9s" repeatCount="indefinite"/></polyline>\n'
+              % (xb - 12, ym - 9, xb, ym, xb - 12, ym + 9, t["pencil"], 0.2 + i * 0.12, 0.21 + i * 0.12))
+    # 도장: 다음 정답
+    s += stamp(t, 1120, y0 + 24, "v7", t["red"], t0=0.56, r=30, rot=14)
+    # 되돌아가는 점선: 두 번째 바퀴
+    d = "M %d %d C %d %d, %d %d, %d %d" % (xs[3] + sw / 2, y0 + sh + 14, xs[3] + sw / 2, y0 + sh + 90, xs[0] + sw / 2, y0 + sh + 90, xs[0] + sw / 2, y0 + sh + 14)
+    s += '<path d="%s" fill="none" stroke="%s" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round"/>\n' % (d, t["pencil"])
+    s += pencil_line(t, d, t0=0.62, t1=0.9, col=t["blue"], width=2.4)
+    s += text(600, y0 + sh + 92, "검토 표 → 정답 v6, v7 → 다음 후보 (두 번째 바퀴)", 13, t["blue"], "bold", anchor="middle", serif=True)
     s += "</svg>\n"
     write("flow", theme, s)
 

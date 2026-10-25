@@ -5,9 +5,9 @@
   <img alt="CAL01 공동 검토: 같은 구간을 보고 판단을 함께 남김" src="docs/readme/hero-light.svg" width="100%">
 </picture>
 
-[![검토 사이트](https://img.shields.io/badge/%EA%B2%80%ED%86%A0-cal01--review.onrender.com-ffb347?style=flat-square&logo=render&logoColor=white&labelColor=0b0f0c)](https://cal01-review.onrender.com/)
-[![분석 저장소](https://img.shields.io/badge/%EB%B6%84%EC%84%9D-pdm--project-5ec8ff?style=flat-square&logo=github&logoColor=white&labelColor=0b0f0c)](https://github.com/posco-3bungi-pdm/pdm-project)
-[![관제](https://img.shields.io/badge/%EA%B4%80%EC%A0%9C-cal01--monitor-a8ff3e?style=flat-square&logo=github&logoColor=white&labelColor=0b0f0c)](https://github.com/posco-3bungi-pdm/cal01-monitor)
+[![검토 사이트](https://img.shields.io/badge/%EA%B2%80%ED%86%A0-cal01--review.onrender.com-c8322b?style=flat&logo=render&logoColor=white&labelColor=2b2a33)](https://cal01-review.onrender.com/)
+[![분석 저장소](https://img.shields.io/badge/%EB%B6%84%EC%84%9D-pdm--project-2b5fb3?style=flat&logo=github&logoColor=white&labelColor=2b2a33)](https://github.com/posco-3bungi-pdm/pdm-project)
+[![관제](https://img.shields.io/badge/%EA%B4%80%EC%A0%9C-cal01--monitor-8d8a84?style=flat&logo=github&logoColor=white&labelColor=2b2a33)](https://github.com/posco-3bungi-pdm/cal01-monitor)
 
 </div>
 
@@ -20,7 +20,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/flow-dark.svg">
-  <img alt="후보 들어옴, 검토 화면, 팀 판단, 검토 표로 네 단계와 두 번째 바퀴" src="docs/readme/flow-light.svg" width="100%">
+  <img alt="쪽지 네 장으로 보는 후보 들어옴, 검토 화면, 팀 판단, 검토 표와 두 번째 바퀴" src="docs/readme/flow-light.svg" width="100%">
 </picture>
 
 ## 화면
