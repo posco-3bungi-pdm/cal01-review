@@ -5,13 +5,14 @@
   <img alt="CAL01 공동 검토: 같은 구간을 보고 판단을 함께 남김" src="docs/readme/hero-light.svg" width="100%">
 </picture>
 
-[![검토 사이트](https://img.shields.io/badge/%EA%B2%80%ED%86%A0-cal01--review.onrender.com-ffb347?style=flat-square&logo=render&logoColor=white&labelColor=0b0f0c)](https://cal01-review.onrender.com/)
-[![분석 저장소](https://img.shields.io/badge/%EB%B6%84%EC%84%9D-pdm--project-5ec8ff?style=flat-square&logo=github&logoColor=white&labelColor=0b0f0c)](https://github.com/posco-3bungi-pdm/pdm-project)
-[![관제](https://img.shields.io/badge/%EA%B4%80%EC%A0%9C-cal01--monitor-a8ff3e?style=flat-square&logo=github&logoColor=white&labelColor=0b0f0c)](https://github.com/posco-3bungi-pdm/cal01-monitor)
+[![검토 사이트](https://img.shields.io/badge/%EA%B2%80%ED%86%A0-cal01--review.onrender.com-c8322b?style=flat&logo=render&logoColor=white&labelColor=2b2a33)](https://cal01-review.onrender.com/)
+[![분석 저장소](https://img.shields.io/badge/%EB%B6%84%EC%84%9D-pdm--project-2b5fb3?style=flat&logo=github&logoColor=white&labelColor=2b2a33)](https://github.com/posco-3bungi-pdm/pdm-project)
+[![관제](https://img.shields.io/badge/%EA%B4%80%EC%A0%9C-cal01--monitor-8d8a84?style=flat&logo=github&logoColor=white&labelColor=2b2a33)](https://github.com/posco-3bungi-pdm/cal01-monitor)
 
 </div>
 
-연속 소둔로(CAL01) 이상 후보를 팀이 함께 보고 판단을 남기는 검토 사이트임. 3σ 통계 후보와 모델이 고른 후보를 LOT 그래프 위에 띄우고, 팀원이 1·0·보류와 메모를 남기면 그 판단이 검토 표(`domain_decisions.csv`)가 되어 pdm-project의 다음 정답(v6, v7)으로 돌아감.
+- 연속 소둔로(CAL01) 이상 후보를 팀이 함께 보고 판단을 남기는 검토 사이트임
+- 3σ 통계 후보와 모델이 고른 후보를 LOT 그래프 위에 띄우고, 팀원이 1·0·보류와 메모를 남기면 그 판단이 검토 표(`domain_decisions.csv`)가 되어 pdm-project의 다음 정답(v6, v7)으로 돌아감
 
 <img alt="검토 화면: LOT 고르기, 후보 목록과 그래프, 판단 메모, 채널 선택, 시간창, 팀원 기록, LOT 나란히 비교" src="docs/readme/review.gif" width="100%">
 
@@ -19,7 +20,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/flow-dark.svg">
-  <img alt="후보 들어옴, 검토 화면, 팀 판단, 검토 표로 네 단계와 두 번째 바퀴" src="docs/readme/flow-light.svg" width="100%">
+  <img alt="쪽지 네 장으로 보는 후보 들어옴, 검토 화면, 팀 판단, 검토 표와 두 번째 바퀴" src="docs/readme/flow-light.svg" width="100%">
 </picture>
 
 ## 화면
@@ -97,3 +98,6 @@ copy .env.example .env
 | 무료 Postgres | 만든 날부터 30일 뒤 만료 (14일 유예). 그 전에 `검토 표 내보내기`로 받아 두기 |
 | 판단자 이름 | 사이트에 남은 이름 그대로 검토 표에 들어감. "AI 제안"은 팀이 확인해 이름을 바꾼 것만 정답에 넣음 |
 | 올리지 않는 것 | `.env`, `local.db`, `.venv` (`.gitignore`에 있음) |
+
+- 만든 팀: 포스코 K-뉴딜 아카데미 3조 오운완<sub>(오늘 운전 완벽)</sub>
+- 2026년 10월 25일부터 공개 저장소임
